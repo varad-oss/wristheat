@@ -44,7 +44,7 @@ Prototype, not a medical device.
 - Samples are buffered in memory (cap 900, oldest dropped). Only strictly increasing timestamps are kept.
 - Each request carries up to 600 samples. When the network fails, it retries after 2 → 4 → 8 → 16 → 30 s and shows "Offline · buffering N s".
 - 401/404 stop the uploads and show "Setup error: unauthorized / unknown trainee". 400 drops that batch and continues.
-- The phone vibrates only on `alert`: AMBER 2×200 ms, RED 3×600 ms (repeated every 10 s until tapped or the state leaves RED), RECOVERED 1×800 ms.
+- The watch vibrates only on `alert`: AMBER 2×200 ms, RED 3×600 ms (repeated every 10 s until tapped or the state leaves RED), RECOVERED 1×800 ms.
 - The screen is kept on while a session is running.
 - *Stop* asks "End session?". Yes calls `POST /v1/sessions/{id}/end` (best effort, 3 s).
 

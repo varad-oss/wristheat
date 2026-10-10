@@ -59,8 +59,10 @@ private fun emitHr(data: DataPointContainer, onSample: (HrSample) -> Unit) {
 class ExerciseHeartRateSource(context: Context) : HeartRateSource {
     private val client = HealthServices.getClient(context.applicationContext).exerciseClient
     private var callback: ExerciseUpdateCallback? = null
+    @Volatile private var stopRequested = false
 
     override suspend fun start(onSample: (HrSample) -> Unit, onError: (String) -> Unit) {
+        stopRequested = false
         try {
             val caps = client.getCapabilitiesAsync().await()
             val supported = ExerciseType.RUNNING in caps.supportedExerciseTypes &&
@@ -76,7 +78,7 @@ class ExerciseHeartRateSource(context: Context) : HeartRateSource {
                 override fun onExerciseUpdateReceived(update: ExerciseUpdate) {
                     emitHr(update.latestMetrics, onSample)
                     val state = update.exerciseStateInfo.state
-                    if (state.isEnded) {
+                    if (state.isEnded && !stopRequested) {
                         Log.w(TAG, "exercise ended: $state reason=${update.exerciseStateInfo.endReason}")
                         onError("exercise_ended")
                     }
@@ -110,6 +112,7 @@ class ExerciseHeartRateSource(context: Context) : HeartRateSource {
     }
 
     override suspend fun stop() {
+        stopRequested = true
         runCatching { client.endExerciseAsync().await() }.onFailure { Log.w(TAG, "end exercise", it) }
         callback?.let { cb -> runCatching { client.clearUpdateCallbackAsync(cb).await() } }
         callback = null

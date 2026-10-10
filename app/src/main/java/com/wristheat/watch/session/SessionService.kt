@@ -115,6 +115,7 @@ class SessionService : LifecycleService() {
                     SessionRepository.onLocalSample(s)
                 },
                 onError = { code ->
+                    if (stopping || sessionId != id) return@start
                     hrFailed = true
                     Log.w(TAG, "hr error $code")
                     lifecycleScope.launch {
