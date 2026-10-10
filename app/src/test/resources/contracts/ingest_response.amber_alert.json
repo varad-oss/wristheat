@@ -1,0 +1,9 @@
+{
+  "schema": 1, "trainee_id": "T1", "session_id": "3f6c1e9a-0b7d-4a51-9a52-0c3c0d2f8e11",
+  "accepted": 5, "dropped": 0, "state": "AMBER", "state_since": 1791700660000,
+  "calibration_remaining_s": 0, "hr_now": 163, "hr0": 74, "core_est_c": 37.78, "core_band_c": 0.6,
+  "psi": 5.6, "minutes_to_red": 7,
+  "env": {"wbgt_c": 31.4, "flag": "RED", "pm25": 72.0, "us_aqi": 158, "updated_at": 1791700200000, "stale": false},
+  "advice": {"en": "Strain rising. Slow down and drink water.", "hi": "तनाव बढ़ रहा है। गति धीमी करें और पानी पिएँ।"},
+  "alert": "AMBER", "incident_id": null, "server_time": 1791700665300
+}

@@ -1,0 +1,9 @@
+{
+  "schema": 1, "trainee_id": "T1", "session_id": "3f6c1e9a-0b7d-4a51-9a52-0c3c0d2f8e11",
+  "accepted": 5, "dropped": 0, "state": "GREEN", "state_since": 1791701680000,
+  "calibration_remaining_s": 0, "hr_now": 98, "hr0": 74, "core_est_c": 37.95, "core_band_c": 0.6,
+  "psi": 3.0, "minutes_to_red": null,
+  "env": {"wbgt_c": 31.0, "flag": "YELLOW", "pm25": 70.0, "us_aqi": 157, "updated_at": 1791701400000, "stale": false},
+  "advice": {"en": "Recovery confirmed. Resume only at an easier pace.", "hi": "रिकवरी की पुष्टि हुई। अब केवल धीमी गति से दोबारा शुरू करें।"},
+  "alert": "RECOVERED", "incident_id": "inc-3f6c1e9a-1791701140000", "server_time": 1791701685000
+}

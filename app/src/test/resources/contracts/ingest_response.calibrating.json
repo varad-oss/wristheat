@@ -1,0 +1,9 @@
+{
+  "schema": 1, "trainee_id": "T1", "session_id": "3f6c1e9a-0b7d-4a51-9a52-0c3c0d2f8e11",
+  "accepted": 5, "dropped": 0, "state": "CALIBRATING", "state_since": 1791700000000,
+  "calibration_remaining_s": 95, "hr_now": 93, "hr0": null, "core_est_c": null, "core_band_c": 0.6,
+  "psi": null, "minutes_to_red": null,
+  "env": {"wbgt_c": 30.2, "flag": "YELLOW", "pm25": 41.0, "us_aqi": 114, "updated_at": 1791699600000, "stale": false},
+  "advice": {"en": "Sit still — measuring your resting heart rate.", "hi": "स्थिर बैठें — आपकी आराम की हृदय गति मापी जा रही है।"},
+  "alert": "NONE", "incident_id": null, "server_time": 1791700005200
+}
