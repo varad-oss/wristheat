@@ -94,7 +94,7 @@ fun LiveScreen(ui: UiState, onStop: () -> Unit) {
                         Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        CText(ui.state ?: "--", size = 24.sp, color = color, weight = FontWeight.Bold)
+                        CText(ui.state ?: "--", size = if ((ui.state?.length ?: 0) > 6) 19.sp else 24.sp, color = color, weight = FontWeight.Bold)
                         Text(
                             text = (ui.hrLocal ?: ui.hrServer)?.toString() ?: "--",
                             fontSize = 64.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,

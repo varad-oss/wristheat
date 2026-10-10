@@ -40,6 +40,7 @@ fun CText(
 ) = Text(
     text = text, fontSize = size, color = color, fontWeight = weight,
     textAlign = TextAlign.Center, modifier = modifier.fillMaxWidth(),
+    lineHeight = size * 1.15f,
 )
 
 @Composable

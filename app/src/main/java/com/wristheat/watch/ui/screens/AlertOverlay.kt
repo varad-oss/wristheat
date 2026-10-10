@@ -31,11 +31,11 @@ fun AlertOverlayScreen(overlay: Overlay, advice: String?, onTap: () -> Unit) {
                 CText("Tap when you've stopped", size = 13.sp, weight = FontWeight.SemiBold)
             }
             Overlay.AMBER -> {
-                CText("SLOW DOWN", size = 34.sp, weight = FontWeight.Black)
+                CText("SLOW DOWN", size = 30.sp, weight = FontWeight.Black)
                 advice?.let { CText(it, size = 15.sp) }
             }
             Overlay.RECOVERED -> {
-                CText("Recovery confirmed", size = 26.sp, weight = FontWeight.Bold)
+                CText("Recovery confirmed", size = 24.sp, weight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
                 CText("Resume only at an easier pace", size = 15.sp)
             }

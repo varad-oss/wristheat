@@ -15,6 +15,7 @@ import androidx.health.services.client.data.DataType
 import androidx.health.services.client.data.DeltaDataType
 import androidx.health.services.client.data.ExerciseConfig
 import androidx.health.services.client.data.ExerciseLapSummary
+import androidx.health.services.client.data.ExerciseState
 import androidx.health.services.client.data.ExerciseTrackedStatus
 import androidx.health.services.client.data.ExerciseType
 import androidx.health.services.client.data.ExerciseUpdate
@@ -60,9 +61,11 @@ class ExerciseHeartRateSource(context: Context) : HeartRateSource {
     private val client = HealthServices.getClient(context.applicationContext).exerciseClient
     private var callback: ExerciseUpdateCallback? = null
     @Volatile private var stopRequested = false
+    @Volatile private var seenActive = false
 
     override suspend fun start(onSample: (HrSample) -> Unit, onError: (String) -> Unit) {
         stopRequested = false
+        seenActive = false
         try {
             val caps = client.getCapabilitiesAsync().await()
             val supported = ExerciseType.RUNNING in caps.supportedExerciseTypes &&
@@ -74,11 +77,18 @@ class ExerciseHeartRateSource(context: Context) : HeartRateSource {
             if (info.exerciseTrackedStatus == ExerciseTrackedStatus.OTHER_APP_IN_PROGRESS) {
                 onError("exercise_in_use"); return
             }
+            if (info.exerciseTrackedStatus == ExerciseTrackedStatus.OWNED_EXERCISE_IN_PROGRESS) {
+                // Leftover from a previous run of ours (e.g. process killed): end it first.
+                runCatching { client.endExerciseAsync().await() }
+            }
             val cb = object : ExerciseUpdateCallback {
                 override fun onExerciseUpdateReceived(update: ExerciseUpdate) {
                     emitHr(update.latestMetrics, onSample)
                     val state = update.exerciseStateInfo.state
-                    if (state.isEnded && !stopRequested) {
+                    if (state == ExerciseState.ACTIVE) seenActive = true
+                    // A superseded previous exercise can report ENDED right after we start;
+                    // only an end after we went ACTIVE means our tracking stopped.
+                    if (state.isEnded && seenActive && !stopRequested) {
                         Log.w(TAG, "exercise ended: $state reason=${update.exerciseStateInfo.endReason}")
                         onError("exercise_ended")
                     }

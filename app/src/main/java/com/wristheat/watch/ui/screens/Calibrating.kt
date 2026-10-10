@@ -2,6 +2,7 @@ package com.wristheat.watch.ui.screens
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,13 +35,12 @@ fun CalibratingScreen(ui: UiState, onStop: () -> Unit) {
     }
 
     RoundColumn {
-        CText("Sit still", size = 22.sp, weight = FontWeight.Bold)
-        CText(formatMmSs(remaining), size = 44.sp, weight = FontWeight.Bold)
-        CText(ui.hrLocal?.let { "$it bpm" } ?: "-- bpm", size = 20.sp)
-        Spacer(Modifier.height(4.dp))
+        CText("Sit still", size = 20.sp, weight = FontWeight.Bold)
+        CText(formatMmSs(remaining), size = 40.sp, weight = FontWeight.Bold)
+        CText(ui.hrLocal?.let { "$it bpm" } ?: "-- bpm", size = 18.sp)
         CText("Measuring your resting heart rate", size = 12.sp, color = Color(0xFFBDBDBD))
         SyncLine(ui.upload)
-        Spacer(Modifier.height(6.dp))
-        Chip("Stop", onStop, container = Color(0xFF3A3A3A))
+        Spacer(Modifier.height(4.dp))
+        Chip("Stop", onStop, container = Color(0xFF3A3A3A), modifier = Modifier.padding(horizontal = 40.dp))
     }
 }
