@@ -100,6 +100,7 @@ class SessionService : LifecycleService() {
         val uploader = Uploader(
             api, buffer, SystemClock, AppConfig.traineeId, id,
             onResponse = { r ->
+                Log.i(TAG, "ingest ok state=${r.state} accepted=${r.accepted} dropped=${r.dropped} alert=${r.alert}")
                 policy.onResponse(r.alert, r.state).forEach(haptics::play)
                 SessionRepository.onResponse(r)
             },
@@ -107,10 +108,13 @@ class SessionService : LifecycleService() {
             log = { Log.i(TAG, it) },
         )
 
+        var lastSampleT = 0L
         jobs += lifecycleScope.launch {
             var hrFailed = false
             source.start(
                 onSample = { s ->
+                    if (lastSampleT > 0 && s.tMs - lastSampleT > 5_000) Log.w(TAG, "hr gap ${(s.tMs - lastSampleT) / 1000}s")
+                    lastSampleT = maxOf(lastSampleT, s.tMs)
                     buffer.add(Sample(s.tMs, s.bpm))
                     SessionRepository.onLocalSample(s)
                 },

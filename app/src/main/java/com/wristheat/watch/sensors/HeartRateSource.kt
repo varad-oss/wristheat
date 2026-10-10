@@ -10,12 +10,12 @@ import androidx.health.services.client.ExerciseUpdateCallback
 import androidx.health.services.client.HealthServices
 import androidx.health.services.client.MeasureCallback
 import androidx.health.services.client.data.Availability
+import androidx.health.services.client.data.BatchingMode
 import androidx.health.services.client.data.DataPointContainer
 import androidx.health.services.client.data.DataType
 import androidx.health.services.client.data.DeltaDataType
 import androidx.health.services.client.data.ExerciseConfig
 import androidx.health.services.client.data.ExerciseLapSummary
-import androidx.health.services.client.data.ExerciseState
 import androidx.health.services.client.data.ExerciseTrackedStatus
 import androidx.health.services.client.data.ExerciseType
 import androidx.health.services.client.data.ExerciseUpdate
@@ -61,11 +61,11 @@ class ExerciseHeartRateSource(context: Context) : HeartRateSource {
     private val client = HealthServices.getClient(context.applicationContext).exerciseClient
     private var callback: ExerciseUpdateCallback? = null
     @Volatile private var stopRequested = false
-    @Volatile private var seenActive = false
+    @Volatile private var requestedAt: Instant? = null
 
     override suspend fun start(onSample: (HrSample) -> Unit, onError: (String) -> Unit) {
         stopRequested = false
-        seenActive = false
+        requestedAt = null
         try {
             val caps = client.getCapabilitiesAsync().await()
             val supported = ExerciseType.RUNNING in caps.supportedExerciseTypes &&
@@ -85,12 +85,13 @@ class ExerciseHeartRateSource(context: Context) : HeartRateSource {
                 override fun onExerciseUpdateReceived(update: ExerciseUpdate) {
                     emitHr(update.latestMetrics, onSample)
                     val state = update.exerciseStateInfo.state
-                    if (state == ExerciseState.ACTIVE) seenActive = true
-                    // A superseded previous exercise can report ENDED right after we start;
-                    // only an end after we went ACTIVE means our tracking stopped.
-                    if (state.isEnded && seenActive && !stopRequested) {
-                        Log.w(TAG, "exercise ended: $state reason=${update.exerciseStateInfo.endReason}")
-                        onError("exercise_ended")
+                    // Updates from an older exercise (a leftover we superseded) can arrive on this
+                    // callback; only an end of the exercise we started means tracking stopped.
+                    val since = requestedAt
+                    val ours = since != null && update.startTime?.isBefore(since.minusSeconds(2)) == false
+                    if (state.isEnded) {
+                        Log.w(TAG, "exercise ended: $state reason=${update.exerciseStateInfo.endReason} ours=$ours")
+                        if (ours && !stopRequested) onError("exercise_ended")
                     }
                 }
                 override fun onLapSummaryReceived(lapSummary: ExerciseLapSummary) = Unit
@@ -105,11 +106,17 @@ class ExerciseHeartRateSource(context: Context) : HeartRateSource {
             }
             callback = cb
             client.setUpdateCallback(cb)
+            // With the screen off Health Services batches HR for minutes; ask for 5-s delivery.
+            val batching = setOf(BatchingMode.HEART_RATE_5_SECONDS)
+                .filter { it in caps.supportedBatchingModeOverrides }.toSet()
+            Log.i(TAG, "batching overrides: $batching")
             val config = ExerciseConfig.builder(ExerciseType.RUNNING)
                 .setDataTypes(setOf(DataType.HEART_RATE_BPM))
                 .setIsAutoPauseAndResumeEnabled(false)
                 .setIsGpsEnabled(false)
+                .setBatchingModeOverrides(batching)
                 .build()
+            requestedAt = Instant.now()
             client.startExerciseAsync(config).await()
             Log.i(TAG, "exercise started")
         } catch (e: SecurityException) {

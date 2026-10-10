@@ -48,6 +48,28 @@ Prototype, not a medical device.
 - The screen is kept on while a session is running.
 - *Stop* asks "End session?". Yes calls `POST /v1/sessions/{id}/end` (best effort, 3 s).
 
+## Verified on SM-R920 (11 Oct, 01:30–02:10 IST)
+
+| Check | Result |
+|---|---|
+| HR rate, `ExerciseClient`, worn | 60 samples/min, steady over 5 min |
+| Fake sequence (`fakeApi=true`, `hrSource=fake`) | Calibrating → GREEN → AMBER overlay + buzz → RED overlay + buzz, repeat after 10 s, stops on tap → RECOVERING → Recovery confirmed + buzz → GREEN. Screens in `docs/screens/` |
+| Stop flow | Stop → "End session?" → Yes → `end: true`, service gone, back to Start |
+| App in background, real HR | 30 uploads at 5 s and 141 samples in 150 s; no gap > 5 s |
+| Screen off (Dozing) 90 s, real HR | 18 uploads at 5 s and 86 samples (~57/min); no gap > 5 s |
+| `adb shell screenrecord` over Wi-Fi | Works (max 3 min per file) |
+
+Screen-off HR uses the `HEART_RATE_5_SECONDS` batching override (supported on this watch). Without it, Health Services delivers HR in bursts of several minutes while the screen is off.
+
+**Still to do:** real backend (W7), outdoor network fallback, 20-min battery figure.
+
+## Recording the watch screen for the video
+
+```bash
+adb shell screenrecord --time-limit 180 /sdcard/wristheat.mp4
+adb pull /sdcard/wristheat.mp4
+```
+
 ## Logs
 
 ```bash
@@ -59,6 +81,8 @@ adb logcat -s WristHeatSession WristHeatHR WristHeatBuzz
 - If a Samsung Health workout is running, Health Services reports another app owns the exercise. The app shows "Stop the Samsung Health workout, then retry" instead of taking over.
 - Starting a Samsung Health workout mid-session ends our exercise. The session stops and the error is shown.
 - Wireless debugging drops when the watch sleeps; reconnect with the new port.
+- After a crash or force-stop, our old exercise keeps running. Its late ENDED (superseded) update is ignored by checking the exercise start time.
+- `adb shell input tap` while the screen is dozing only wakes it; wake first, then tap.
 
 ## Tests
 
