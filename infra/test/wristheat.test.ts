@@ -112,3 +112,8 @@ test('dashboard on CloudFront with SPA fallback and CORS for its domain', () => 
   expect(origins).toContain('http://localhost:5173');
   expect(origins).toContain('DomainName');
 });
+
+test('CloudWatch dashboard named WristHeat', () => {
+  template.hasResourceProperties('AWS::CloudWatch::Dashboard', { DashboardName: 'WristHeat' });
+  template.hasOutput('CloudWatchDashboardUrl', {});
+});

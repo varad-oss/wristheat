@@ -6,6 +6,7 @@ import { Data } from './data';
 import { Escalation } from './escalation';
 import { IngestApi } from './ingest-api';
 import { Layers } from './layers';
+import { Observability } from './observability';
 import { Web } from './web';
 
 export interface WristHeatStackProps extends StackProps {
@@ -38,6 +39,10 @@ export class WristHeatStack extends Stack {
     escalation.stateMachine.grantStartExecution(ingest.ingestFn);
     escalation.grantTaskResponse(ingest.ingestFn);
     escalation.grantTaskResponse(apiFn);
+    new Observability(this, 'Observability', {
+      functions: [ingest.ingestFn, apiFn, context.fn, ...escalation.functions],
+      stateMachine: escalation.stateMachine,
+    });
     web.deploy(props.buildDir, {
       apiUrl: ingest.api.apiEndpoint, region: this.region,
       userPoolId: auth.userPool.userPoolId, userPoolClientId: auth.client.userPoolClientId,
