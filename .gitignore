@@ -21,3 +21,4 @@ infra/outputs.json
 .DS_Store
 wear/app/build/
 .superpowers/
+*.tsbuildinfo
