@@ -32,8 +32,14 @@ export interface IncidentSummary {
   acked_at: number | null; acked_by: string | null; advice: { en: string; hi: string };
 }
 
+export interface ActivityItem {
+  t: number; trainee_id: string; name: string; kind: 'real' | 'simulated'; source: TraineeRow['source'];
+  event: string; state: State;
+}
+
 export interface Roster {
   site: Site | null; trainees: TraineeRow[]; open_incidents: IncidentSummary[]; server_time: number;
+  activity?: ActivityItem[];
 }
 
 export interface MinutePoint {
