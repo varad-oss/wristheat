@@ -1,5 +1,6 @@
 import { CfnOutput, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { Auth } from './auth';
 import { Context } from './context';
 import { Data } from './data';
 import { IngestApi } from './ingest-api';
@@ -17,8 +18,11 @@ export class WristHeatStack extends Stack {
 
     const data = new Data(this, 'Data');
     const layers = new Layers(this, 'Layers', props.buildDir);
-    const ingest = new IngestApi(this, 'Ingest', { buildDir: props.buildDir, data, layers, siteId });
+    const corsOrigins = ['http://localhost:5173'];
+    const ingest = new IngestApi(this, 'Ingest', { buildDir: props.buildDir, data, layers, siteId, corsOrigins });
     const context = new Context(this, 'Context', { buildDir: props.buildDir, data, layers, siteId });
+    const auth = new Auth(this, 'Auth');
+    ingest.addSupervisorApi(auth, context.fn);
 
     const out = (name: string, value: string) => new CfnOutput(this, name, { value });
     out('ApiUrl', ingest.api.apiEndpoint);
