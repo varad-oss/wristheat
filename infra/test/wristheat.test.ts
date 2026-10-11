@@ -97,3 +97,18 @@ test('escalation state machine waits for task tokens and emails two topics', () 
     Environment: Match.objectLike({ Variables: Match.objectLike({ STATE_MACHINE_ARN: Match.anyValue() }) }),
   }));
 });
+
+test('dashboard on CloudFront with SPA fallback and CORS for its domain', () => {
+  template.resourceCountIs('AWS::CloudFront::Distribution', 1);
+  template.hasResourceProperties('AWS::CloudFront::Distribution', {
+    DistributionConfig: Match.objectLike({
+      DefaultRootObject: 'index.html',
+      CustomErrorResponses: Match.arrayWith([Match.objectLike({ ErrorCode: 404, ResponseCode: 200, ResponsePagePath: '/index.html' })]),
+    }),
+  });
+  template.hasOutput('DashboardUrl', {});
+  const api = Object.values(template.findResources('AWS::ApiGatewayV2::Api'))[0] as any;
+  const origins = JSON.stringify(api.Properties.CorsConfiguration.AllowOrigins);
+  expect(origins).toContain('http://localhost:5173');
+  expect(origins).toContain('DomainName');
+});
