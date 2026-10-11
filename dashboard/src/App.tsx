@@ -33,7 +33,7 @@ export function PublicHeader() {
         <NavLink to="/demo">Live demo</NavLink>
         <NavLink to="/method">Method</NavLink>
       </nav>
-      <Link to="/console" className="btn btn-quiet who">Supervisor sign-in</Link>
+      <Link to="/console" className="btn btn-quiet who">Sign in</Link>
     </header>
   );
 }

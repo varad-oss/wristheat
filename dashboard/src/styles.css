@@ -372,3 +372,34 @@ h1, h2, h3 { text-wrap: balance; }
 .me-alert .btn-ack { background: #fff; color: var(--red); border-color: #fff; font-size: 1.1rem; }
 .me-alert-note { font-size: 0.92rem; opacity: 0.92; margin-top: 10px !important; }
 .me-alert-ok { font-weight: 600; background: rgba(255,255,255,0.16); padding: 8px 12px; border-radius: 4px; }
+
+/* ---- landing v3: scale band, two modes, plan --------------------------------------------------------------- */
+.why { display: none; }
+.scale { background: var(--ink); color: #eef2f0; padding: 64px max(24px, calc((100% - 1180px) / 2)); margin-top: 40px; }
+.scale-lead { font-family: var(--font-num); font-weight: 700; font-size: clamp(2rem, 4.2vw, 3.4rem); line-height: 1.05; margin: 0 0 14px; max-width: 22ch; }
+.scale-lead .num { color: #f0b9b2; }
+.scale-sub { color: #c9d3cf; font-size: 1.12rem; max-width: 62ch; margin: 0 0 36px; }
+.scale-grid { display: grid; gap: 1px; background: rgba(255,255,255,0.14); grid-template-columns: repeat(6, minmax(0, 1fr)); border: 1px solid rgba(255,255,255,0.14); border-radius: 6px; overflow: hidden; }
+.stat { background: var(--ink); padding: 22px 24px; grid-column: span 2; }
+.stat-wide { grid-column: span 3; background: #1f3036; }
+.stat-figure { font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; margin: 0; line-height: 1; color: #fff; }
+.stat h3 { font-size: 1.02rem; margin: 8px 0 6px; color: #f0b9b2; font-weight: 600; }
+.stat p { margin: 0; color: #c9d3cf; line-height: 1.5; }
+.stat a { color: #fff; font-size: 0.85rem; white-space: nowrap; }
+.modes { max-width: 1320px; margin: 0 auto; padding: 72px 24px 24px; display: grid; gap: 56px; }
+.mode { display: grid; gap: 32px; align-items: center; }
+.mode-solo { grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); }
+.mode-group { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); }
+.mode img { max-width: 100%; height: auto; display: block; }
+.mode-group img { width: 100%; border-radius: 8px; border: 1px solid var(--rule); }
+.plan { max-width: 1320px; margin: 0 auto; padding: 56px 24px 64px; }
+.plan img { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--rule); margin-top: 18px; background: var(--surface); }
+@media (max-width: 900px) {
+  .scale-grid { grid-template-columns: 1fr; }
+  .stat, .stat-wide { grid-column: auto; }
+  .mode-solo, .mode-group { grid-template-columns: 1fr; }
+  .mode-group img { order: 2; }
+  .modes { padding: 48px 16px 16px; gap: 40px; }
+  .plan { padding: 40px 16px 48px; }
+  .scale { padding: 48px 16px; }
+}

@@ -19,14 +19,20 @@ beforeEach(() => {
 });
 
 describe('Landing page', () => {
-  it('tells the before, during and after story with both entry points', () => {
+  it('shows the global scale with sources, both ways to use it, and the entry points', () => {
     at('/');
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
-    for (const h of ['Before the session', 'During the session', 'After the session']) {
-      expect(screen.getByRole('heading', { name: new RegExp(h) })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /489,000 people die from heat/ })).toBeInTheDocument();
+    for (const who of ['Outdoor and manual workers', 'School children', 'Recruitment and military training',
+      'Pilgrims, runners and crowds', 'India, summer 2024']) {
+      expect(screen.getByRole('heading', { name: who })).toBeInTheDocument();
+    }
+    expect(screen.getByRole('link', { name: 'ILO, 2024' })).toHaveAttribute('href', expect.stringContaining('ilo.org'));
+    for (const h of ['On your own', 'With a group', 'Plan around the heat, before anyone starts']) {
+      expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
     }
     expect(screen.getAllByRole('link', { name: 'See the live demo' })[0]).toHaveAttribute('href', '/demo');
-    expect(screen.getAllByRole('link', { name: 'Supervisor sign-in' })[0]).toHaveAttribute('href', '/console');
+    expect(screen.getAllByRole('link', { name: 'Sign in' })[0]).toHaveAttribute('href', '/console');
     expect(document.body.textContent).not.toMatch(/—/);
   });
 });
