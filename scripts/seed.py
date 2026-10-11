@@ -28,6 +28,8 @@ def main():
     ap.add_argument("--name", required=True)
     ap.add_argument("--age", type=int, required=True)
     ap.add_argument("--supervisor-email")
+    ap.add_argument("--wearer-username", help="Cognito username for the solo wearer T1 (e.g. varad)")
+    ap.add_argument("--wearer-email")
     ap.add_argument("--outputs")
     args = ap.parse_args()
     out = outputs(args.outputs)
@@ -49,21 +51,32 @@ def main():
     print(f"Seeded site {SITE['site_id']} and trainees {', '.join(r[0] for r in rows)}")
 
     if args.supervisor_email:
-        create_supervisor(out, args.supervisor_email)
+        create_user(out, "supervisor", args.supervisor_email, "supervisors")
+    if args.wearer_username:
+        create_user(out, args.wearer_username, args.wearer_email or args.supervisor_email, "wearers")
+        upsert(trainees, {"trainee_id": "T1"}, {"owner_username": args.wearer_username})
+        upsert(trainees, {"trainee_id": "R1"}, {"owner_username": args.wearer_username})
+        print(f"Linked T1 and R1 to wearer login '{args.wearer_username}'")
 
 
-def create_supervisor(out: dict, email: str):
+def create_user(out: dict, username: str, email: str | None, group: str):
+    """Creates the Cognito user (temporary password printed once) and adds it to its group."""
     idp = boto3.client("cognito-idp", region_name=REGION)
     alphabet = string.ascii_letters + string.digits
     temp = "Wh-" + "".join(secrets.choice(alphabet) for _ in range(10)) + "9a!"
+    attrs = [{"Name": "email", "Value": email}, {"Name": "email_verified", "Value": "true"}] if email else []
     try:
-        idp.admin_create_user(UserPoolId=out["UserPoolId"], Username="supervisor", TemporaryPassword=temp,
-                              MessageAction="SUPPRESS",
-                              UserAttributes=[{"Name": "email", "Value": email},
-                                              {"Name": "email_verified", "Value": "true"}])
-        print(f"Supervisor user 'supervisor' ({email}) created. Temporary password (shown once): {temp}")
+        idp.admin_create_user(UserPoolId=out["UserPoolId"], Username=username, TemporaryPassword=temp,
+                              MessageAction="SUPPRESS", UserAttributes=attrs)
+        print(f"User '{username}' created. Temporary password (shown once): {temp}")
     except idp.exceptions.UsernameExistsException:
-        print("Supervisor user already exists; leaving its password unchanged.")
+        print(f"User '{username}' already exists; password unchanged.")
+    except idp.exceptions.AliasExistsException:
+        idp.admin_create_user(UserPoolId=out["UserPoolId"], Username=username, TemporaryPassword=temp,
+                              MessageAction="SUPPRESS")
+        print(f"User '{username}' created without email (address already used). Temporary password (shown once): {temp}")
+    idp.admin_add_user_to_group(UserPoolId=out["UserPoolId"], Username=username, GroupName=group)
+    print(f"'{username}' is in group '{group}'")
 
 
 if __name__ == "__main__":

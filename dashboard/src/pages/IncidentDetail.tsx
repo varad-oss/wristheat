@@ -21,7 +21,7 @@ const OUTCOME: Record<string, string> = {
   not_confirmed: 'Recovery not confirmed within the wait window',
 };
 
-export function IncidentDetail() {
+export function IncidentDetail({ backTo = '/console/incidents', backLabel = 'All incidents' }: { backTo?: string; backLabel?: string }) {
   const { id = '' } = useParams();
   const [inc, setInc] = useState<Incident | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export function IncidentDetail() {
   ];
   return (
     <main id="main" className="page">
-      <p><Link to="/console/incidents">All incidents</Link></p>
+      <p><Link to={backTo}>{backLabel}</Link></p>
       <h1 className="inc-title">
         {inc.trainee_name} {inc.trainee_kind === 'simulated' && <span className="badge badge-sim">SIMULATED</span>}
       </h1>

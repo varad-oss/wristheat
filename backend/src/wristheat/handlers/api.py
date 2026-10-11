@@ -251,6 +251,63 @@ def refresh_context(deps: Deps) -> tuple[int, dict]:
     return 200, {"env": payload.get("env")}
 
 
+# --- roles and the wearer's own view ---------------------------------------------------------------------------
+
+def groups_of(claims: dict) -> set[str]:
+    """Cognito groups; API Gateway passes them as '[a b]' strings, tests may pass lists."""
+    raw = claims.get("cognito:groups")
+    if isinstance(raw, list):
+        return {str(g) for g in raw}
+    if isinstance(raw, str):
+        return {g for g in raw.strip("[]").replace(",", " ").split() if g}
+    return set()
+
+
+def wearer_for(repo: Repo, username: str) -> dict | None:
+    return next((t for t in repo.list_trainees() if t.get("owner_username") == username), None)
+
+
+def me(deps: Deps, username: str, now_ms: int) -> tuple[int, dict]:
+    """A solo wearer's own page: live state, heat context, their open incidents and recent sessions."""
+    t = wearer_for(deps.repo, username)
+    if t is None:
+        return _err(404, "no_wearer_profile", "This sign-in is not linked to a wearer.")
+    site = deps.repo.get_site(t.get("site_id") or os.environ.get("SITE_ID", "kgp"))
+    own = [i for i in deps.repo.list_incidents() if i.get("trainee_id") == t["trainee_id"]]
+    open_inc = sorted((i for i in own if i.get("status") in OPEN_STATUSES), key=lambda i: i.get("opened_at", 0), reverse=True)
+    row, session = _trainee_row(deps.repo, t, now_ms, {i.get("session_id"): i["incident_id"] for i in open_inc})
+    sessions = sorted(deps.repo.list_sessions(t["trainee_id"]), key=lambda x: x.get("started_at", 0), reverse=True)[:10]
+    activity = [{"t": e["t"], "event": e["event"], "state": e["state"]} for e in (session or {}).get("recent_events") or []]
+    return 200, {
+        "trainee": {k: t.get(k) for k in ("trainee_id", "name", "kind", "mode", "age")} | {"mode": t.get("mode", "group")},
+        "live": row, "site": _site_payload(site, now_ms),
+        "open_incidents": [_summary(i, (site or {}).get("env")) for i in open_inc],
+        "sessions": [{k: x.get(k) for k in ("session_id", "started_at", "last_seen", "status", "state", "source")}
+                     for x in sessions],
+        "activity": sorted(activity, key=lambda a: a["t"], reverse=True)[:ACTIVITY_CAP],
+        "server_time": now_ms,
+    }
+
+
+SUPERVISOR_ONLY = {"GET /v1/roster", "GET /v1/incidents", "POST /v1/context/refresh"}
+OWNED_SESSION = {"GET /v1/sessions/{session_id}/series", "GET /v1/sessions/{session_id}/summary"}
+OWNED_INCIDENT = {"GET /v1/incidents/{incident_id}", "POST /v1/incidents/{incident_id}/ack"}
+
+
+def _forbidden_for_wearer(deps: Deps, key: str, path: dict, username: str) -> bool:
+    """True when a non-supervisor asks for something that is not their own."""
+    if key in SUPERVISOR_ONLY:
+        return True
+    t = wearer_for(deps.repo, username) if (key in OWNED_SESSION or key in OWNED_INCIDENT) else None
+    if key in OWNED_SESSION:
+        s = deps.repo.get_session(path.get("session_id", ""))
+        return t is None or s is None or s.get("trainee_id") != t["trainee_id"]
+    if key in OWNED_INCIDENT:
+        inc = deps.repo.get_incident(path.get("incident_id", ""))
+        return t is None or inc is None or inc.get("trainee_id") != t["trainee_id"]
+    return False
+
+
 # --- routing -------------------------------------------------------------------------------------------------
 
 def route(event: dict, deps: Deps, now_ms: int) -> tuple[int, dict]:
@@ -258,10 +315,15 @@ def route(event: dict, deps: Deps, now_ms: int) -> tuple[int, dict]:
     path = event.get("pathParameters") or {}
     query = event.get("queryStringParameters") or {}
     claims = (((event.get("requestContext") or {}).get("authorizer") or {}).get("jwt") or {}).get("claims") or {}
-    if key == "GET /v1/roster":
-        return roster(deps, now_ms)
+    user = claims.get("cognito:username") or claims.get("username") or ""
     if key == "GET /v1/public/roster":
         return public_roster(deps, now_ms)
+    if key == "GET /v1/me":
+        return me(deps, user, now_ms)
+    if "supervisors" not in groups_of(claims) and _forbidden_for_wearer(deps, key, path, user):
+        return _err(403, "forbidden", "This sign-in can only see its own data.")
+    if key == "GET /v1/roster":
+        return roster(deps, now_ms)
     if key == "GET /v1/sessions/{session_id}/series":
         return series(deps, path.get("session_id", ""), query.get("since_minute"))
     if key == "GET /v1/sessions/{session_id}/summary":
@@ -275,7 +337,6 @@ def route(event: dict, deps: Deps, now_ms: int) -> tuple[int, dict]:
             body = parse_body(event) or {}
         except ValueError:
             return _err(400, "bad_request", "Body is not valid JSON.")
-        user = claims.get("cognito:username") or claims.get("username") or "supervisor"
         return ack_incident(deps.repo, deps.clients, path.get("incident_id", ""), user,
                             str(body.get("note", ""))[:200], now_ms)
     if key == "POST /v1/context/refresh":

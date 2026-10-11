@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { getRoster } from './api';
 import type { Roster } from './types';
 
-/** Loads the roster at once, then polls every 3 s while the tab is visible. */
-export function useRoster(intervalMs = 3000, load: () => Promise<Roster> = getRoster) {
-  const [roster, setRoster] = useState<Roster | null>(null);
+/** Loads at once, then polls every few seconds while the tab is visible (roster by default). */
+export function useRoster<T = Roster>(intervalMs = 3000, load: () => Promise<T> = getRoster as unknown as () => Promise<T>) {
+  const [roster, setRoster] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;

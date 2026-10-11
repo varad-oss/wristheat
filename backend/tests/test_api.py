@@ -36,10 +36,10 @@ def make_deps():
     return api.Deps(repo=repo, clients=FakeClients(), context_function="ctx-fn", audio_bucket="audio-bkt")
 
 
-def call(deps, route, path=None, query=None, body=None, user="supervisor"):
+def call(deps, route, path=None, query=None, body=None, user="supervisor", groups="[supervisors]"):
     event = {"routeKey": route, "pathParameters": path or {}, "queryStringParameters": query,
              "body": json.dumps(body) if body is not None else None,
-             "requestContext": {"authorizer": {"jwt": {"claims": {"cognito:username": user}}}}}
+             "requestContext": {"authorizer": {"jwt": {"claims": {"cognito:username": user, "cognito:groups": groups}}}}}
     return api.route(event, deps, NOW)
 
 
@@ -237,3 +237,63 @@ def test_group_roster_excludes_solo_wearers():
     assert "T1" not in {a["trainee_id"] for a in out["activity"]}
     assert "inc-t1" not in {i["incident_id"] for i in out["open_incidents"]}
     assert "S3" in {t["trainee_id"] for t in out["trainees"]}
+
+
+def wearer_deps():
+    deps = make_deps()
+    deps.repo.trainees["T1"].update(mode="solo", owner_username="varad")
+    add_incident(deps, "inc-t1", "NOTIFIED", trainee_id="T1", trainee_name="Varad", trainee_kind="real",
+                 trainee_mode="solo", session_id="sT1-aaaaaaaa")
+    add_incident(deps, "inc-s3", "NOTIFIED")
+    return deps
+
+
+def as_wearer(deps, route, path=None, body=None):
+    return call(deps, route, path, body=body, user="varad", groups="[wearers]")
+
+
+def test_wearer_cannot_use_group_routes():
+    deps = wearer_deps()
+    for route in ("GET /v1/roster", "GET /v1/incidents", "POST /v1/context/refresh"):
+        status, out = as_wearer(deps, route)
+        assert status == 403 and out["error"] == "forbidden", route
+
+
+def test_me_returns_own_state_sessions_and_incidents():
+    deps = wearer_deps()
+    deps.repo.sessions["sT1-old-aaaa"] = session("sT1-old-aaaa", "T1", "GREEN", NOW - 86_400_000)
+    status, out = as_wearer(deps, "GET /v1/me")
+    assert status == 200
+    assert out["trainee"]["trainee_id"] == "T1" and out["trainee"]["mode"] == "solo"
+    assert out["live"]["state"] == "AMBER" and out["live"]["core_est_c"] == 37.92
+    assert [i["incident_id"] for i in out["open_incidents"]] == ["inc-t1"]
+    assert {s["session_id"] for s in out["sessions"]} == {"sT1-aaaaaaaa", "sT1-old-aaaa", "orig-12345678"}
+    assert out["sessions"][0]["session_id"] == "sT1-aaaaaaaa"
+    assert out["site"]["env"]["flag"] == "RED" and "server_time" in out
+
+
+def test_me_for_unlinked_user_is_404():
+    status, out = call(wearer_deps(), "GET /v1/me", user="nobody", groups="[wearers]")
+    assert status == 404 and out["error"] == "no_wearer_profile"
+
+
+def test_wearer_acks_only_own_incident():
+    deps = wearer_deps()
+    assert as_wearer(deps, "POST /v1/incidents/{incident_id}/ack", {"incident_id": "inc-s3"}, body={})[0] == 403
+    status, out = as_wearer(deps, "POST /v1/incidents/{incident_id}/ack", {"incident_id": "inc-t1"}, body={})
+    assert status == 200 and deps.repo.get_incident("inc-t1")["acked_by"] == "varad"
+
+
+def test_wearer_reads_only_own_session_and_incident():
+    deps = wearer_deps()
+    assert as_wearer(deps, "GET /v1/sessions/{session_id}/summary", {"session_id": "sT1-aaaaaaaa"})[0] == 200
+    assert as_wearer(deps, "GET /v1/sessions/{session_id}/summary", {"session_id": "sS3-aaaaaaaa"})[0] == 403
+    assert as_wearer(deps, "GET /v1/sessions/{session_id}/series", {"session_id": "sS3-aaaaaaaa"})[0] == 403
+    assert as_wearer(deps, "GET /v1/incidents/{incident_id}", {"incident_id": "inc-t1"})[0] == 200
+    assert as_wearer(deps, "GET /v1/incidents/{incident_id}", {"incident_id": "inc-s3"})[0] == 403
+
+
+def test_groups_claim_as_list_is_accepted():
+    deps = make_deps()
+    assert call(deps, "GET /v1/roster", groups=["supervisors"])[0] == 200
+    assert call(deps, "GET /v1/roster", groups=None)[0] == 403

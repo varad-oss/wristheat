@@ -55,6 +55,7 @@ class Repo(Protocol):
     def list_trainees(self) -> list[dict]: ...
     def put_trainee(self, item: dict) -> None: ...
     def get_session(self, sid: str) -> dict | None: ...
+    def list_sessions(self, trainee_id: str) -> list[dict]: ...
     def create_session(self, item: dict) -> None: ...
     def save_session(self, item: dict, expected_version: int) -> None: ...
     def end_session(self, sid: str, now_ms: int) -> None: ...
@@ -90,6 +91,9 @@ class FakeRepo:
 
     def get_session(self, sid):
         return copy.deepcopy(self.sessions.get(sid))
+
+    def list_sessions(self, trainee_id):
+        return copy.deepcopy([x for x in self.sessions.values() if x.get("trainee_id") == trainee_id])
 
     def create_session(self, item):
         if item["session_id"] in self.sessions:
@@ -184,6 +188,18 @@ class DynamoRepo:
 
     def get_session(self, sid):
         return self._get("sessions", {"session_id": sid})
+
+    def list_sessions(self, trainee_id):
+        from boto3.dynamodb.conditions import Attr
+        items, kwargs = [], {"FilterExpression": Attr("trainee_id").eq(trainee_id),
+                             "ProjectionExpression": "session_id, trainee_id, #s, started_at, last_seen, #st, incident_id, #src",
+                             "ExpressionAttributeNames": {"#s": "status", "#st": "state", "#src": "source"}}
+        while True:
+            page = self.t["sessions"].scan(**kwargs)
+            items += page.get("Items", [])
+            if "LastEvaluatedKey" not in page:
+                return [from_dynamo(i) for i in items]
+            kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
 
     def create_session(self, item):
         try:

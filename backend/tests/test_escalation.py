@@ -134,3 +134,18 @@ def test_sns_subjects_are_ascii_even_with_unicode_names():
     escalation.close(deps, IID, NOW + 200_000)
     for call in deps.clients.sns.ops("publish"):
         assert call["Subject"].isascii() and "\n" not in call["Subject"] and len(call["Subject"]) <= 100
+
+
+def test_solo_wearer_is_alerted_on_the_watch_and_emergency_contact_on_escalation():
+    deps = make()
+    deps.repo.update_incident(IID, trainee_mode="solo", trainee_kind="real", trainee_name="Varad")
+    escalation.notify(deps, IID, NOW)
+    assert deps.clients.sns.ops("publish") == []
+    inc = deps.repo.get_incident(IID)
+    assert inc["audio"] and inc["events"][-2]["detail"] == "Wearer alerted on the watch"
+    escalation.escalate(deps, IID, NOW + 90_000)
+    msg = deps.clients.sns.ops("publish")[-1]
+    assert msg["TopicArn"] == "arn:backup" and "Emergency contact" in msg["Subject"]
+    assert "has not responded" in msg["Message"]
+    escalation.close(deps, IID, NOW + 400_000)
+    assert deps.clients.sns.ops("publish")[-1]["TopicArn"] == "arn:backup"

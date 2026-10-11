@@ -47,6 +47,10 @@ def _link(deps: Deps, iid: str) -> str:
     return f"{base}/incidents/{iid}" if base.startswith("http") else base
 
 
+def _solo(inc: dict) -> bool:
+    return inc.get("trainee_mode") == "solo"
+
+
 def _label(inc: dict) -> str:
     return "[SIMULATED] " if inc.get("trainee_kind") == "simulated" else ""
 
@@ -104,10 +108,14 @@ def notify(deps: Deps, iid: str, now_ms: int) -> None:
             audio[lang] = key
     except Exception:  # noqa: BLE001 — the email must still go out
         logger.exception("audio synthesis failed")
-    _publish(deps, deps.cfg.supervisor_topic, f"{_label(inc)}WristHeat RED: {name} must stop now",
-             _alert_message(deps, inc, f"Heat-strain RED alert for {name}."))
+    if _solo(inc):
+        detail = "Wearer alerted on the watch"  # no supervisor; the emergency contact is emailed only on escalation
+    else:
+        _publish(deps, deps.cfg.supervisor_topic, f"{_label(inc)}WristHeat RED: {name} must stop now",
+                 _alert_message(deps, inc, f"Heat-strain RED alert for {name}."))
+        detail = "Supervisor emailed"
     deps.repo.update_incident(iid, audio=audio)
-    _event(deps, iid, now_ms, "NOTIFIED", "Supervisor emailed")
+    _event(deps, iid, now_ms, "NOTIFIED", detail)
     if audio:
         _event(deps, iid, now_ms, "AUDIO_READY", "English and Hindi voice alerts ready")
 
@@ -145,9 +153,15 @@ def escalate(deps: Deps, iid: str, now_ms: int) -> None:
         logger.info("incident no longer NOTIFIED; escalating email anyway", extra={"incident_id": iid})
     inc = deps.repo.get_incident(iid)
     name = inc.get("trainee_name")
-    _publish(deps, deps.cfg.backup_topic, f"{_label(inc)}ESCALATED WristHeat RED: {name} - supervisor has not responded",
-             _alert_message(deps, inc, f"ESCALATION: the supervisor has not acknowledged the RED alert for {name}."))
-    _event(deps, iid, now_ms, "ESCALATED", "Backup contact emailed")
+    if _solo(inc):
+        _publish(deps, deps.cfg.backup_topic, f"Emergency contact: {name} has not responded to a RED heat alert",
+                 _alert_message(deps, inc, f"{name} reached RED heat strain while training alone and has not responded "
+                                           f"on their phone. Please call or check on them now."))
+        _event(deps, iid, now_ms, "ESCALATED", "Emergency contact emailed")
+    else:
+        _publish(deps, deps.cfg.backup_topic, f"{_label(inc)}ESCALATED WristHeat RED: {name} - supervisor has not responded",
+                 _alert_message(deps, inc, f"ESCALATION: the supervisor has not acknowledged the RED alert for {name}."))
+        _event(deps, iid, now_ms, "ESCALATED", "Backup contact emailed")
 
 
 def close(deps: Deps, iid: str, now_ms: int) -> dict:
@@ -169,7 +183,8 @@ def close(deps: Deps, iid: str, now_ms: int) -> dict:
     _event(deps, iid, now_ms, "REPORT_READY", f"Report by {'Amazon Bedrock' if source == 'bedrock' else 'template'}")
     _event(deps, iid, now_ms, "CLOSED", outcome)
     name = inc.get("trainee_name")
-    _publish(deps, deps.cfg.supervisor_topic, f"{_label(inc)}WristHeat resolved: {name} ({outcome.replace('_', ' ')})",
+    _publish(deps, deps.cfg.backup_topic if _solo(inc) else deps.cfg.supervisor_topic,
+             f"{_label(inc)}WristHeat resolved: {name} ({outcome.replace('_', ' ')})",
              "\n".join([f"Incident for {name} closed: {outcome.replace('_', ' ')}.",
                         f"Time to acknowledge: {metrics['time_to_ack_s']} s",
                         f"Time to confirmed recovery: {metrics['time_to_recovery_s']} s",

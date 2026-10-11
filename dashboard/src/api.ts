@@ -1,6 +1,6 @@
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { getConfig } from './config';
-import type { Incident, IncidentSummary, Roster, Series, SessionSummary, SiteEnv } from './types';
+import type { Incident, IncidentSummary, MeView, Roster, Series, SessionSummary, SiteEnv } from './types';
 
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) {
@@ -39,3 +39,4 @@ export async function getPublicRoster(): Promise<Roster & { public: true }> {
   if (!res.ok) throw new ApiError(res.status, body.error ?? 'error', body.message ?? `HTTP ${res.status}`);
   return body;
 }
+export const getMe = () => call<MeView>('/v1/me');

@@ -7,9 +7,11 @@ import { IncidentDetail } from './pages/IncidentDetail';
 import { Incidents } from './pages/Incidents';
 import { Landing } from './pages/Landing';
 import { Live } from './pages/Live';
+import { Me } from './pages/Me';
 import { Method } from './pages/Method';
 import { SessionReport } from './pages/SessionReport';
 import { TraineeDetail } from './pages/TraineeDetail';
+import type { Role } from './role';
 import { useRoster } from './useRoster';
 
 export function Brand({ to }: { to: string }) {
@@ -69,14 +71,45 @@ function Legacy({ to }: { to: (p: Record<string, string | undefined>) => string 
   return <Navigate to={to(useParams())} replace />;
 }
 
+/** Sends wearers to their own page; supervisors (and unknown roles) stay. */
+export function RoleGate({ role, children }: { role: Role | null; children: ReactNode }) {
+  if (role === null) return <main id="main" className="page"><p role="status">Checking your access…</p></main>;
+  if (role === 'wearer') return <Navigate to="/me" replace />;
+  return <>{children}</>;
+}
+
+/** The solo wearer's area (mounted under /me). */
+export function WearerArea({ user, onSignOut }: { user: string; onSignOut: () => void }) {
+  return (
+    <>
+      <header className="top">
+        <a className="skip" href="#main">Skip to content</a>
+        <Brand to="/me" />
+        <nav aria-label="Wearer">
+          <NavLink to="/me" end>My training</NavLink>
+          <NavLink to="/method">Method</NavLink>
+        </nav>
+        <span className="who">{user}<button className="btn btn-quiet" onClick={onSignOut}>Sign out</button></span>
+      </header>
+      <Routes>
+        <Route index element={<Me />} />
+        <Route path="runs/:id" element={<SessionReport backTo="/me" backLabel="My training" />} />
+        <Route path="incidents/:id" element={<IncidentDetail backTo="/me" backLabel="My training" />} />
+      </Routes>
+      <Footer />
+    </>
+  );
+}
+
 /** Every route of the site. `consoleElement` is the authenticated console (Authenticator-wrapped in main.tsx). */
-export function SiteRoutes({ consoleElement }: { consoleElement: ReactNode }) {
+export function SiteRoutes({ consoleElement, wearerElement = null }: { consoleElement: ReactNode; wearerElement?: ReactNode }) {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/demo" element={<Demo />} />
       <Route path="/method" element={<><PublicHeader /><Method /><Footer /></>} />
       <Route path="/console/*" element={consoleElement} />
+      <Route path="/me/*" element={wearerElement} />
       <Route path="/incidents" element={<Navigate to="/console/incidents" replace />} />
       <Route path="/incidents/:id" element={<Legacy to={(p) => `/console/incidents/${p.id}`} />} />
       <Route path="/trainee/:id" element={<Legacy to={(p) => `/console/trainee/${p.id}`} />} />

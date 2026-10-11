@@ -13,7 +13,7 @@ const OUTCOME: Record<string, string> = {
 };
 
 /** Duty-of-care record for one session; prints cleanly to A4. */
-export function SessionReport() {
+export function SessionReport({ backTo = '/console', backLabel = 'Group view' }: { backTo?: string; backLabel?: string }) {
   const { id = '' } = useParams();
   const [s, setS] = useState<SessionSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -22,10 +22,11 @@ export function SessionReport() {
   }, [id]);
 
   if (!s) return <main id="main" className="page"><p role="status">{error ? `Couldn't load this report: ${error}` : 'Loading report…'}</p></main>;
-  return <ReportView s={s} />;
+  return <ReportView s={s} backTo={backTo} backLabel={backLabel} />;
 }
 
-export function ReportView({ s }: { s: SessionSummary }) {
+export function ReportView({ s, backTo = '/console', backLabel = 'Group view' }: { s: SessionSummary; backTo?: string; backLabel?: string }) {
+  const incidentBase = backTo === '/me' ? '/me/incidents' : '/console/incidents';
   const states = SHOWN.filter((k) => s.minutes_by_state[k] > 0);
   const total = Math.max(1, s.duration_min);
   const label = `Time in state: ${states.map((k) => `${k} ${s.minutes_by_state[k]} min`).join(', ')}`;
@@ -33,7 +34,7 @@ export function ReportView({ s }: { s: SessionSummary }) {
 
   return (
     <main id="main" className="page report-page">
-      <p className="no-print"><Link to="/console">Group view</Link></p>
+      <p className="no-print"><Link to={backTo}>{backLabel}</Link></p>
       <header className="report-head">
         <div>
           <h1 className="inc-title">{s.trainee.name} <SourceBadge t={tb} /></h1>
@@ -80,7 +81,7 @@ export function ReportView({ s }: { s: SessionSummary }) {
                 {i.metrics?.time_to_ack_s != null && <p>{`Acknowledged after ${duration(i.metrics.time_to_ack_s)}`}</p>}
                 {i.metrics?.time_to_recovery_s != null && <p>{`Recovery confirmed after ${duration(i.metrics.time_to_recovery_s)}`}</p>}
                 <p className="muted">{i.outcome ? OUTCOME[i.outcome] ?? i.outcome : 'Incident still open'}.{' '}
-                  <Link className="no-print" to={`/console/incidents/${i.incident_id}`}>Open incident</Link></p>
+                  <Link className="no-print" to={`${incidentBase}/${i.incident_id}`}>Open incident</Link></p>
               </li>
             ))}
           </ul>

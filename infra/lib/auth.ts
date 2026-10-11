@@ -22,6 +22,11 @@ export class Auth extends Construct {
       authFlows: { userSrp: true, adminUserPassword: true },
       preventUserExistenceErrors: true,
     });
+    // Roles: supervisors see the group; wearers see only their own data (enforced in the API Lambda).
+    new cognito.CfnUserPoolGroup(this, 'SupervisorsGroup', { userPoolId: this.userPool.userPoolId, groupName: 'supervisors',
+      description: 'Group console: roster, incidents, acknowledgements' });
+    new cognito.CfnUserPoolGroup(this, 'WearersGroup', { userPoolId: this.userPool.userPoolId, groupName: 'wearers',
+      description: 'Solo wearers: their own live state, runs and reports' });
     new CfnOutput(scope, 'UserPoolId', { value: this.userPool.userPoolId });
     new CfnOutput(scope, 'UserPoolClientId', { value: this.client.userPoolClientId });
   }

@@ -74,3 +74,13 @@ export interface SessionSummary {
   incidents: (Pick<Incident, 'incident_id' | 'status' | 'opened_at' | 'closed_at' | 'outcome' | 'trigger' | 'metrics' |
     'acked_at' | 'acked_by'> & { recovered_at: number | null; report_source: 'bedrock' | 'template' | null })[];
 }
+
+export interface MeView {
+  trainee: { trainee_id: string; name: string; kind: 'real' | 'simulated'; mode: 'solo' | 'group'; age: number | null };
+  live: TraineeRow;
+  site: Site | null;
+  open_incidents: IncidentSummary[];
+  activity: { t: number; event: string; state: State }[];
+  sessions: { session_id: string; started_at: number; last_seen: number; status: string; state: State | null; source: TraineeRow['source'] }[];
+  server_time: number;
+}

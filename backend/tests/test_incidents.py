@@ -27,6 +27,7 @@ def test_open_incident_rule_names(psi, ct, flag, rule):
     assert inc["trigger"]["rule"] == rule
     assert inc["trigger"]["hr"] == 170 and inc["trigger"]["wbgt_c"] == 31.4
     assert inc["status"] == "NOTIFIED" and inc["events"][0]["type"] == "OPENED"
+    assert inc["trainee_mode"] == "group"
 
 
 def test_polly_texts_verbatim():

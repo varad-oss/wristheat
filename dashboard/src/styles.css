@@ -351,3 +351,24 @@ h1, h2, h3 { text-wrap: balance; }
 .step-escalated::before { border-color: var(--amber); background: var(--amber); }
 .step-acknowledged::before, .step-recovery_confirmed::before { border-color: var(--green); background: var(--green); }
 .step-closed::before { border-color: var(--ink); background: var(--ink); }
+
+/* ---- personal page (/me) ----------------------------------------------------------------------------------- */
+.me { max-width: 1100px; }
+.me-title { font-family: var(--font-num); font-size: clamp(1.7rem, 3vw, 2.3rem); margin: 4px 0 16px; }
+.me-now { border-left: 8px solid var(--rule); display: grid; gap: 10px; }
+.me-now-head { display: flex; justify-content: space-between; align-items: center; }
+.me-now-head h2 { margin: 0; }
+.me-cols { display: grid; gap: 16px; margin-top: 16px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .me-cols { grid-template-columns: 1fr 1fr; } }
+.me-runs, .me-feed { list-style: none; margin: 0; padding: 0; }
+.me-runs li { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e6ebe8; }
+.me-runs li:last-child { border-bottom: 0; }
+.me-runs a { font-weight: 600; margin-right: auto; }
+.me-feed li { padding: 4px 0; }
+.me-feed time { color: var(--ink-2); margin-right: 8px; }
+.me-alert { background: var(--red); color: #fff; border-radius: 6px; padding: 18px 20px; margin-bottom: 16px; }
+.me-alert p { margin: 0 0 10px; max-width: 62ch; }
+.me-alert-title { font-family: var(--font-num); font-weight: 700; font-size: 1.8rem; line-height: 1.1; }
+.me-alert .btn-ack { background: #fff; color: var(--red); border-color: #fff; font-size: 1.1rem; }
+.me-alert-note { font-size: 0.92rem; opacity: 0.92; margin-top: 10px !important; }
+.me-alert-ok { font-weight: 600; background: rgba(255,255,255,0.16); padding: 8px 12px; border-radius: 4px; }

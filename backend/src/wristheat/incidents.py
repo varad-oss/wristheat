@@ -27,7 +27,8 @@ def open_incident(trainee: dict, session_id: str, st: EngineState, env: Env | No
                "rule": red_rule(psi, st.ct, flag)}
     iid = incident_id or incident_id_for(session_id, now_ms)
     return {"incident_id": iid, "trainee_id": trainee["trainee_id"], "trainee_name": trainee.get("name", ""),
-            "trainee_kind": trainee.get("kind", "real"), "session_id": session_id, "status": "NOTIFIED",
+            "trainee_kind": trainee.get("kind", "real"), "trainee_mode": trainee.get("mode", "group"),
+            "session_id": session_id, "status": "NOTIFIED",
             "opened_at": now_ms, "trigger": trigger,
             "events": [{"t": now_ms, "type": "OPENED", "detail": f"RED entered ({trigger['rule']})"}],
             "ack_pending": False, "ttl": ttl_for("incidents", now_ms)}
