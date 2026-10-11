@@ -96,6 +96,7 @@ export class IngestApi extends Construct {
       this.api.addRoutes({ path, methods: [method], integration, authorizer });
     route('/v1/roster', apigw.HttpMethod.GET);
     route('/v1/sessions/{session_id}/series', apigw.HttpMethod.GET);
+    route('/v1/sessions/{session_id}/summary', apigw.HttpMethod.GET);
     route('/v1/incidents', apigw.HttpMethod.GET);
     route('/v1/incidents/{incident_id}', apigw.HttpMethod.GET);
     route('/v1/incidents/{incident_id}/ack', apigw.HttpMethod.POST);

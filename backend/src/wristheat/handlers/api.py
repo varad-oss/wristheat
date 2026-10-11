@@ -127,6 +127,51 @@ def series(deps: Deps, session_id: str, since: str | None) -> tuple[int, dict]:
     return 200, {"session_id": session_id, "points": points}
 
 
+SUMMARY_STATES = ("GREEN", "AMBER", "RED", "RECOVERING", "CALIBRATING")
+
+
+def _peak(rows: list[dict], key: str, digits: int) -> float | None:
+    values = [r[key] for r in rows if r.get(key) is not None]
+    return round(max(values), digits) if values else None
+
+
+def summarize_session(repo: Repo, session_id: str) -> tuple[int, dict]:
+    """Duty-of-care record for one session: time per state, peaks, heat context, incidents."""
+    s = repo.get_session(session_id)
+    if s is None:
+        return _err(404, "unknown_session", f"Session {session_id} does not exist.")
+    t = repo.get_trainee(s.get("trainee_id", "")) or {}
+    minutes = repo.get_minutes(session_id)
+    by_state = {k: 0 for k in SUMMARY_STATES} | {"gap": 0}
+    flags: dict[str, int] = {}
+    for m in minutes:
+        if m.get("hr") is None:
+            by_state["gap"] += 1
+        else:
+            by_state[m.get("state") if m.get("state") in SUMMARY_STATES else "GREEN"] += 1
+        flags[m.get("flag") or "NONE"] = flags.get(m.get("flag") or "NONE", 0) + 1
+    real = [m for m in minutes if m.get("hr") is not None]
+    first = real[0] if real else None
+    incidents = sorted((i for i in repo.list_incidents() if i.get("session_id") == session_id),
+                       key=lambda i: i.get("opened_at", 0))
+    return 200, {
+        "session": {k: s.get(k) for k in ("session_id", "source", "device", "replay_of", "started_at", "last_seen",
+                                          "status", "state")},
+        "trainee": {"trainee_id": t.get("trainee_id", s.get("trainee_id")), "name": t.get("name"),
+                    "kind": t.get("kind", "real"), "age": t.get("age")},
+        "started_at": s.get("started_at"), "last_seen": s.get("last_seen"),
+        "duration_min": len(minutes), "hr0": (s.get("engine") or {}).get("hr0"),
+        "minutes_by_state": by_state,
+        "peak_psi": _peak(real, "psi", 1), "peak_core_c": _peak(real, "core_est_c", 2),
+        "peak_hr": int(_peak(real, "hr", 0)) if _peak(real, "hr", 0) is not None else None,
+        "flag_minutes": flags,
+        "env_at_start": {"wbgt_c": first.get("wbgt_c"), "flag": first.get("flag")} if first else None,
+        "incidents": [{**{k: i.get(k) for k in ("incident_id", "status", "opened_at", "closed_at", "outcome",
+                                                 "trigger", "metrics", "acked_at", "acked_by", "recovered_at")},
+                       "report_source": (i.get("report") or {}).get("source")} for i in incidents],
+    }
+
+
 def list_incidents(deps: Deps, status: str | None) -> tuple[int, dict]:
     items = deps.repo.list_incidents()
     if (status or "open") == "open":
@@ -205,6 +250,8 @@ def route(event: dict, deps: Deps, now_ms: int) -> tuple[int, dict]:
         return roster(deps, now_ms)
     if key == "GET /v1/sessions/{session_id}/series":
         return series(deps, path.get("session_id", ""), query.get("since_minute"))
+    if key == "GET /v1/sessions/{session_id}/summary":
+        return summarize_session(deps.repo, path.get("session_id", ""))
     if key == "GET /v1/incidents":
         return list_incidents(deps, query.get("status"))
     if key == "GET /v1/incidents/{incident_id}":

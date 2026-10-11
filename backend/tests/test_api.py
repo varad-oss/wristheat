@@ -164,3 +164,46 @@ def test_roster_activity_sorted_and_excludes_hidden():
     assert [(a["trainee_id"], a["event"]) for a in act] == [("S3", "RED_ENTERED"), ("T1", "AMBER_ENTERED"), ("S3", "AMBER_ENTERED")]
     assert act[0]["name"] == "Kabir" and act[0]["kind"] == "simulated" and act[0]["source"] == "simulated"
     assert act[0]["state"] == "RED" and len(act) <= 20
+
+
+def _minute(sid, m, state, hr=150.0, psi=5.0, core=37.8, flag="YELLOW"):
+    return {"session_id": sid, "minute": m, "hr": hr, "n": 60, "core_est_c": core, "core_var": 0.01, "psi": psi,
+            "level": state, "state": state, "wbgt_c": 30.0, "flag": flag, "pm25": 40.0}
+
+
+def test_summary_counts_minutes_by_state():
+    deps = make_deps()
+    sid = "sT1-aaaaaaaa"
+    rows = [_minute(sid, 100 + i, "GREEN", psi=2.0 + i, core=37.2 + i / 10, hr=120 + i) for i in range(3)]
+    rows += [_minute(sid, 103 + i, "AMBER", psi=5.5 + i, core=37.9, hr=160 + i) for i in range(2)]
+    rows.append({**_minute(sid, 105, "AMBER"), "hr": None, "psi": None, "level": None, "n": 4})
+    deps.repo.minutes[sid] = {r["minute"]: r for r in rows}
+    status, out = call(deps, "GET /v1/sessions/{session_id}/summary", {"session_id": sid})
+    assert status == 200
+    assert out["minutes_by_state"] == {"GREEN": 3, "AMBER": 2, "RED": 0, "RECOVERING": 0, "CALIBRATING": 0, "gap": 1}
+    assert out["peak_psi"] == 6.5 and out["peak_core_c"] == 37.9 and out["peak_hr"] == 161
+    assert out["trainee"]["name"] == "Varad" and out["trainee"]["kind"] == "real"
+    assert out["session"]["source"] == "live" and out["duration_min"] == 6
+    assert out["flag_minutes"] == {"YELLOW": 6}
+
+
+def test_summary_includes_incidents():
+    deps = make_deps()
+    add_incident(deps, "inc-s3", "CLOSED", outcome="recovered",
+                 metrics={"time_to_ack_s": 107, "time_to_recovery_s": 299, "minutes_in_red": 4,
+                          "peak_psi": 8.1, "peak_core_c": 38.55, "escalated": True})
+    add_incident(deps, "inc-other", "CLOSED", session_id="someone-else")
+    _, out = call(deps, "GET /v1/sessions/{session_id}/summary", {"session_id": "sS3-aaaaaaaa"})
+    assert [i["incident_id"] for i in out["incidents"]] == ["inc-s3"]
+    assert out["incidents"][0]["metrics"]["time_to_ack_s"] == 107 and out["incidents"][0]["outcome"] == "recovered"
+
+
+def test_summary_empty_session():
+    deps = make_deps()
+    status, out = call(deps, "GET /v1/sessions/{session_id}/summary", {"session_id": "sS1-aaaaaaaa"})
+    assert status == 200 and out["minutes_by_state"]["GREEN"] == 0 and out["duration_min"] == 0
+    assert out["peak_psi"] is None and out["peak_core_c"] is None and out["incidents"] == []
+
+
+def test_summary_unknown_session_404():
+    assert call(make_deps(), "GET /v1/sessions/{session_id}/summary", {"session_id": "nope-nope"})[0] == 404

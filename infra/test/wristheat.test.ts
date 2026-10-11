@@ -71,7 +71,7 @@ test('context Lambda runs every 10 minutes', () => {
 test('supervisor routes use the JWT authorizer; device routes do not', () => {
   template.resourceCountIs('AWS::ApiGatewayV2::Authorizer', 1);
   template.hasResourceProperties('AWS::ApiGatewayV2::Authorizer', { AuthorizerType: 'JWT' });
-  for (const key of ['GET /v1/roster', 'GET /v1/sessions/{session_id}/series', 'GET /v1/incidents',
+  for (const key of ['GET /v1/roster', 'GET /v1/sessions/{session_id}/series', 'GET /v1/sessions/{session_id}/summary', 'GET /v1/incidents',
     'GET /v1/incidents/{incident_id}', 'POST /v1/incidents/{incident_id}/ack', 'POST /v1/context/refresh']) {
     template.hasResourceProperties('AWS::ApiGatewayV2::Route', { RouteKey: key, AuthorizationType: 'JWT' });
   }
