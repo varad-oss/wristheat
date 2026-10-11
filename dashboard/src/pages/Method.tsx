@@ -11,7 +11,7 @@ export const HONESTY: React.ReactNode[] = [
 
 export function Method() {
   return (
-    <main className="page prose">
+    <main id="main" className="page prose">
       <h1>How WristHeat estimates heat strain</h1>
       <p>
         Each wearer's watch sends heart rate every 5 seconds. Every minute, a Kalman filter (ECTemp) updates an

@@ -318,3 +318,18 @@ a.btn { text-decoration: none; display: inline-block; }
 }
 .why, .aws { padding-left: max(24px, calc((100% - 1100px) / 2)); padding-right: max(24px, calc((100% - 1100px) / 2)); }
 .why > *, .aws > * { margin-left: 0; margin-right: 0; }
+
+/* ---- Web Interface Guidelines pass ----------------------------------------------------------------------- */
+html { touch-action: manipulation; -webkit-tap-highlight-color: rgba(29, 95, 168, 0.15); }
+h1, h2, h3 { text-wrap: balance; }
+.landing p, .prose p { text-wrap: pretty; }
+.skip { position: absolute; left: 8px; top: -48px; background: var(--ink); color: #fff; padding: 8px 12px; border-radius: 4px; z-index: 10; }
+.skip:focus { top: 8px; }
+.top { position: relative; }
+.btn:hover { background: #f4f6f5; border-color: #aab5b0; }
+.btn-primary:hover { background: #24363c; border-color: #24363c; }
+.btn-light:hover { background: #fff2f0; }
+.btn-ack:hover { background: #24363c; }
+.top nav a:hover { color: var(--ink); background: #f1f4f2; }
+.card-head h3 { min-width: 0; overflow-wrap: anywhere; }
+.action a, .feed-text { min-width: 0; overflow-wrap: anywhere; }

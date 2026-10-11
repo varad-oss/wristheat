@@ -11,7 +11,7 @@ export function Incidents() {
     getIncidents('all').then((r) => setItems(r.incidents)).catch((e) => setError(e instanceof Error ? e.message : 'load failed'));
   }, []);
   return (
-    <main className="page">
+    <main id="main" className="page">
       <h1>Incidents</h1>
       {error && <p role="alert" className="warn">Couldn't load incidents: {error}</p>}
       {!items && !error && <p role="status">Loading incidents…</p>}

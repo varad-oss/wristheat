@@ -10,13 +10,13 @@ import type { Roster } from '../types';
 
 export function Live({ roster, error, readOnly = false }: { roster: Roster | null; error: string | null; readOnly?: boolean }) {
   if (!roster) {
-    return <main className="page"><p role="status">{error ? `Couldn't load the roster: ${error}` : 'Loading roster…'}</p></main>;
+    return <main id="main" className="page"><p role="status">{error ? `Couldn't load the roster: ${error}` : 'Loading roster…'}</p></main>;
   }
   const trainees = [...roster.trainees].sort((a, b) => stateRank(a.state) - stateRank(b.state)
     || a.trainee_id.localeCompare(b.trainee_id));
   const pm25 = roster.site?.env?.pm25 ?? null;
   return (
-    <main className="page">
+    <main id="main" className="page">
       <SiteStrip site={roster.site} readOnly={readOnly} />
       <TodayPanel site={roster.site} serverTime={roster.server_time} />
       {error && <p className="warn" role="alert">Connection problem: {error}. Showing the last data received.</p>}

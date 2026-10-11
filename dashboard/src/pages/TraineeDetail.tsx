@@ -23,7 +23,7 @@ export function TraineeDetail({ roster }: { roster: Roster | null }) {
     return () => { alive = false; window.clearInterval(timer); };
   }, [t?.session_id]);
 
-  if (!t) return <main className="page"><p role="status">{roster ? 'This trainee is not on the roster.' : 'Loading…'}</p></main>;
+  if (!t) return <main id="main" className="page"><p role="status">{roster ? 'This trainee is not on the roster.' : 'Loading…'}</p></main>;
   const data = points.map((p) => ({
     t: p.minute * 60000, hr: p.hr, core: p.hr === null ? null : p.core_est_c,
     band: p.hr === null ? null : [p.core_est_c - 0.6, p.core_est_c + 0.6], state: p.state, flag: p.flag,
@@ -36,7 +36,7 @@ export function TraineeDetail({ roster }: { roster: Roster | null }) {
   }
   const incidents = (roster?.open_incidents ?? []).filter((i) => i.session_id === t.session_id);
   return (
-    <main className="page">
+    <main id="main" className="page">
       <p><Link to="/console">Group view</Link></p>
       <h1 className="inc-title">{t.name} <SourceBadge t={t} /> <StateChip state={t.state} /></h1>
       <p className="inc-sub">Heart rate (left) and estimated core with its ± 0.6 °C band (right). Background shows the state; the strip shows the heat flag.</p>

@@ -24,7 +24,7 @@ export function IncidentDetail() {
     return () => { alive = false; window.clearInterval(t); };
   }, [id]);
 
-  if (!inc) return <main className="page"><p role="status">{error ? `Couldn't load this incident: ${error}` : 'Loading incident…'}</p></main>;
+  if (!inc) return <main id="main" className="page"><p role="status">{error ? `Couldn't load this incident: ${error}` : 'Loading incident…'}</p></main>;
   const m = inc.metrics;
   const tiles: [string, string][] = [
     ['Time to acknowledge', duration(m?.time_to_ack_s)],
@@ -34,7 +34,7 @@ export function IncidentDetail() {
     ['Peak est. core', m?.peak_core_c ? `${num(m.peak_core_c, 2)} °C` : '–'],
   ];
   return (
-    <main className="page">
+    <main id="main" className="page">
       <p><Link to="/console/incidents">All incidents</Link></p>
       <h1 className="inc-title">
         {inc.trainee_name} {inc.trainee_kind === 'simulated' && <span className="badge badge-sim">SIMULATED</span>}

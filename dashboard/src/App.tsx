@@ -16,7 +16,7 @@ export function Brand({ to }: { to: string }) {
   return (
     <Link to={to} className="brand">
       <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="3" width="2.5" height="27" fill="currentColor" /><path d="M7.5 4h19l-5 6 5 6h-19z" fill="#b42318" /></svg>
-      WristHeat
+      <span translate="no">WristHeat</span>
     </Link>
   );
 }
@@ -25,6 +25,7 @@ export function Brand({ to }: { to: string }) {
 export function PublicHeader() {
   return (
     <header className="top">
+      <a className="skip" href="#main">Skip to content</a>
       <Brand to="/" />
       <nav aria-label="Main">
         <NavLink to="/demo">Live demo</NavLink>
@@ -41,6 +42,7 @@ export function Console({ user, onSignOut }: { user: string; onSignOut: () => vo
   return (
     <>
       <header className="top">
+        <a className="skip" href="#main">Skip to content</a>
         <Brand to="/console" />
         <nav aria-label="Console">
           <NavLink to="/console" end>Group</NavLink>

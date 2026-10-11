@@ -21,7 +21,7 @@ export function SessionReport() {
     getSessionSummary(id).then(setS).catch((e) => setError(e instanceof Error ? e.message : 'load failed'));
   }, [id]);
 
-  if (!s) return <main className="page"><p role="status">{error ? `Couldn't load this report: ${error}` : 'Loading report…'}</p></main>;
+  if (!s) return <main id="main" className="page"><p role="status">{error ? `Couldn't load this report: ${error}` : 'Loading report…'}</p></main>;
   return <ReportView s={s} />;
 }
 
@@ -32,7 +32,7 @@ export function ReportView({ s }: { s: SessionSummary }) {
   const tb = { kind: s.trainee.kind, source: s.session.source, recorded_at: null, recorded_device: null };
 
   return (
-    <main className="page report-page">
+    <main id="main" className="page report-page">
       <p className="no-print"><Link to="/console">Group view</Link></p>
       <header className="report-head">
         <div>

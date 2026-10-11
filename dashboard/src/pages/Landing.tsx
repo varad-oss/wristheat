@@ -20,7 +20,7 @@ export function Landing() {
   return (
     <>
       <PublicHeader />
-      <main className="landing">
+      <main id="main" className="landing">
         <section className="hero">
           <div className="hero-copy">
             <h1>Heat strain for every wearer, not one number for everyone.</h1>
@@ -31,7 +31,7 @@ export function Landing() {
             </div>
           </div>
           <figure className="hero-visual">
-            <img className="hero-shot" src="/landing/command.png" width={1232} height={978}
+            <img className="hero-shot" fetchPriority="high" src="/landing/command.png" width={1232} height={978}
                  alt="Supervisor console: group status counts, a list of who needs action now, and live trainee cards" />
             <img className="hero-watch" src="/landing/watch-amber.png" width={450} height={450}
                  alt="Galaxy Watch showing SLOW DOWN with advice to drink water" />
@@ -52,7 +52,7 @@ export function Landing() {
               <h2>Before the session</h2>
               <p>Plan around the heat. A 24-hour heat-flag forecast for your site, the best window to train, and the US Army work, rest and water guidance for today's flag.</p>
             </div>
-            <img src="/landing/today.png" width={1232} height={265} alt="Today panel: hourly heat flags, best window, and work/rest and water table for a YELLOW flag" />
+            <img loading="lazy" src="/landing/today.png" width={1232} height={265} alt="Today panel: hourly heat flags, best window, and work/rest and water table for a YELLOW flag" />
           </article>
           <article className="phase phase-split">
             <div>
@@ -60,13 +60,13 @@ export function Landing() {
               <p>Each watch streams heart rate every 5 seconds. WristHeat estimates a core-temperature trend and strain index, buzzes the wrist when strain rises, and tells the supervisor who needs action.</p>
             </div>
             <div className="watch-row">
-              <img src="/landing/watch-calibrating.png" width={450} height={450} alt="Watch calibrating resting heart rate" />
-              <img src="/landing/watch-amber.png" width={450} height={450} alt="Watch telling the wearer to slow down" />
-              <img src="/landing/watch-recovered.png" width={450} height={450} alt="Watch confirming recovery" />
+              <img loading="lazy" src="/landing/watch-calibrating.png" width={450} height={450} alt="Watch calibrating resting heart rate" />
+              <img loading="lazy" src="/landing/watch-amber.png" width={450} height={450} alt="Watch telling the wearer to slow down" />
+              <img loading="lazy" src="/landing/watch-recovered.png" width={450} height={450} alt="Watch confirming recovery" />
             </div>
           </article>
           <article className="phase phase-wide phase-after">
-            <img src="/landing/report.png" width={1280} height={627} alt="Session report: time in each state, peaks, and incident response times" />
+            <img loading="lazy" src="/landing/report.png" width={1280} height={627} alt="Session report: time in each state, peaks, and incident response times" />
             <div>
               <h2>After the session</h2>
               <p>Keep the record. Unanswered alerts escalate to a backup contact, an incident closes only when the data confirms recovery, and every session prints as a duty-of-care report.</p>
