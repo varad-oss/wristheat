@@ -297,3 +297,9 @@ def test_groups_claim_as_list_is_accepted():
     deps = make_deps()
     assert call(deps, "GET /v1/roster", groups=["supervisors"])[0] == 200
     assert call(deps, "GET /v1/roster", groups=None)[0] == 403
+
+
+def test_groups_of_accepts_every_claim_shape():
+    from wristheat.handlers.api import groups_of
+    for raw in ("[supervisors]", '["supervisors"]', "supervisors", ["supervisors"], "[wearers supervisors]"):
+        assert "supervisors" in groups_of({"cognito:groups": raw}), raw

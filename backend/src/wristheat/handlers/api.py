@@ -259,7 +259,7 @@ def groups_of(claims: dict) -> set[str]:
     if isinstance(raw, list):
         return {str(g) for g in raw}
     if isinstance(raw, str):
-        return {g for g in raw.strip("[]").replace(",", " ").split() if g}
+        return {g.strip('"\'') for g in raw.strip("[]").replace(",", " ").split() if g.strip('"\'')}
     return set()
 
 

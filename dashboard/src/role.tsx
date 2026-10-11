@@ -7,10 +7,14 @@ export type Role = 'supervisor' | 'wearer' | 'unknown';
 export function useRole(): Role | null {
   const [role, setRole] = useState<Role | null>(null);
   useEffect(() => {
-    fetchAuthSession().then((s) => {
-      const groups = (s.tokens?.idToken?.payload['cognito:groups'] as string[] | undefined) ?? [];
+    const groupsOf = (s: Awaited<ReturnType<typeof fetchAuthSession>>) =>
+      (s.tokens?.idToken?.payload['cognito:groups'] as string[] | undefined) ?? [];
+    (async () => {
+      let groups = groupsOf(await fetchAuthSession());
+      // A token issued before the user was added to a group has no groups claim; refresh it once.
+      if (groups.length === 0) groups = groupsOf(await fetchAuthSession({ forceRefresh: true }));
       setRole(groups.includes('supervisors') ? 'supervisor' : groups.includes('wearers') ? 'wearer' : 'unknown');
-    }).catch(() => setRole('unknown'));
+    })().catch(() => setRole('unknown'));
   }, []);
   return role;
 }

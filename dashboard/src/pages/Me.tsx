@@ -8,6 +8,7 @@ import { STATE_COLOUR } from '../components/TraineeCard';
 import { dateTime, elapsed, hhmm, num } from '../format';
 import type { IncidentSummary, MeView } from '../types';
 import { useRoster } from '../useRoster';
+import { VitalsChart } from '../components/VitalsChart';
 
 const EVENT: Record<string, string> = {
   CALIBRATED: 'Calibrated', AMBER_ENTERED: 'AMBER', RED_ENTERED: 'RED',
@@ -88,6 +89,14 @@ export function Me() {
           </>
         ) : <p className="muted">Start a session on your watch. Sit still for 2 minutes while it measures your resting heart rate.</p>}
       </section>
+
+      {data.live?.session_id && (
+        <section className="panel me-vitals" role="region" aria-label="Your vitals this session">
+          <h2>Your vitals this session</h2>
+          <p className="muted">Heart rate (left) and estimated core with its ± 0.6 °C band (right), by minute. Background shows your state.</p>
+          <VitalsChart sessionId={data.live.session_id} incidents={data.open_incidents} height={300} />
+        </section>
+      )}
 
       <TodayPanel site={data.site} serverTime={data.server_time} />
 

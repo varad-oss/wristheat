@@ -56,6 +56,14 @@ describe('Personal page', () => {
     expect(api.ackIncident).toHaveBeenCalledWith('inc-t1', 'wearer stopped');
   });
 
+  it('charts my heart rate and estimated core for the current session', async () => {
+    vi.mocked(api.getMe).mockResolvedValue(me({ live: trainee({ session_id: 'sess-1', state: 'AMBER', hr_now: 162 }) }));
+    renderMe();
+    const chart = await screen.findByRole('region', { name: 'Your vitals this session' });
+    expect(chart).toHaveTextContent('The chart appears after two closed minutes.');
+    expect(api.getSeries).toHaveBeenCalledWith('sess-1');
+  });
+
   it('lists my runs with links to their reports', async () => {
     renderMe();
     const runs = await screen.findByRole('region', { name: 'Your runs' });

@@ -8,13 +8,19 @@ export class ApiError extends Error {
   }
 }
 
-async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const session = await fetchAuthSession();
+async function send(path: string, init: RequestInit, forceRefresh: boolean): Promise<Response> {
+  const session = await fetchAuthSession(forceRefresh ? { forceRefresh: true } : undefined);
   const token = session.tokens?.idToken?.toString();
-  const res = await fetch(`${getConfig().apiUrl.replace(/\/$/, '')}${path}`, {
+  return fetch(`${getConfig().apiUrl.replace(/\/$/, '')}${path}`, {
     ...init,
     headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
   });
+}
+
+async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
+  let res = await send(path, init, false);
+  // A 403 can mean the cached token predates a group change; retry once with a fresh token.
+  if (res.status === 403) res = await send(path, init, true);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new ApiError(res.status, body.error ?? 'error', body.message ?? `HTTP ${res.status}`);
   return body as T;
