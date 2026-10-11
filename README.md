@@ -2,7 +2,7 @@
 
 **Heat strain for every wearer, not one number for everyone.**
 
-WristHeat reads each person's own smartwatch, estimates their heat strain on AWS, and tells the supervisor of a group exerting in heat who needs to stop, before, during and after the session.
+WristHeat reads each person's own smartwatch, estimates their heat strain on AWS, and warns them and whoever is responsible: a runner on their own, or the supervisor of a group exerting in heat, before, during and after the session.
 
 Built for **AWS Environmental Hacks 2026** (Heat & Water track). Research prototype, not a medical device.
 
@@ -11,13 +11,33 @@ Built for **AWS Environmental Hacks 2026** (Heat & Water track). Research protot
 | **Live site** | https://vvs0o13cs4.execute-api.ap-south-1.amazonaws.com |
 | **Public demo** (simulated group, no sign-in) | https://vvs0o13cs4.execute-api.ap-south-1.amazonaws.com/demo |
 | **How the estimate works** | https://vvs0o13cs4.execute-api.ap-south-1.amazonaws.com/method |
-| **Supervisor console** | `/console` (Cognito sign-in) |
+| **Sign in** | `/console` (Cognito). Supervisors get the group console; a solo wearer is sent to their own page at `/me` |
 
 ![WristHeat landing page](docs/images/landing.png)
 
 ## Why
 
-In August and September 2024, 12 candidates died during a 10 km excise constable recruitment run in Jharkhand ([Deccan Herald](https://www.deccanherald.com/amp/story/india%2Fjharkhand%2Fhumidity-lack-of-health-screening-change-in-rules-some-reasons-behind-12-deaths-at-jharkhand-recruitment-drive-report-3181567)). A heat warning gives everyone in a place the same number. The person running cannot tell when *their own* body is at its limit, and neither can the person supervising them.
+About **489,000 people die from heat in an average year** ([WHO](https://www.who.int/news-room/fact-sheets/detail/climate-change-heat-and-health), 2000–2019). A heat warning gives everyone in a place the same number. The person exerting cannot tell when *their own* body is at its limit, and neither can the person responsible for them.
+
+| Who | What happened | Source |
+|---|---|---|
+| Outdoor and manual workers | 2.41 billion workers face excessive heat; about 19,000 die and 22.85 million are injured each year | [ILO, 2024](https://www.ilo.org/publications/ensuring-safety-and-health-work-changing-climate) |
+| School children | 23 students collapsed after a morning assembly in Chitrakoot, UP (Aug 2024); students fainted at assemblies across Bihar in May | [Careers360](https://news.careers360.com/uttar-pradesh-23-students-faint-at-school-in-ups-chitrakoot-due-heat) |
+| Recruitment and military training | 12 candidates died on a 10 km excise constable recruitment run in Jharkhand (2024); the US armed forces logged 471 heat strokes that year | [Deccan Herald](https://www.deccanherald.com/amp/story/india%2Fjharkhand%2Fhumidity-lack-of-health-screening-change-in-rules-some-reasons-behind-12-deaths-at-jharkhand-recruitment-drive-report-3181567), [MSMR, June 2025](https://health.mil/News/Articles/2025/06/01/MSMR-Heat-Illness-2025) |
+| Pilgrims, runners and crowds | 1,301 deaths during the 2024 Hajj in heat up to 51.8 °C; the 2007 Chicago Marathon was halted | [Hajj 2024 summary](https://en.wikipedia.org/wiki/2024_Hajj_extreme_heat_disaster) |
+| India, summer 2024 | 40,984 suspected heatstroke cases and 114 deaths, 1 March to 18 June, hospital reporting only | [NCDC via South First](https://thesouthfirst.com/health/summers-wrath-114-heatwave-deaths-reported-nearly-41000-cases-of-suspected-heatstroke) |
+
+## Two ways to use it
+
+| | On your own (solo) | With a group |
+|---|---|---|
+| Who | A runner, hiker or lone worker | A coach, PE teacher, drill instructor or site supervisor |
+| Sign-in | Cognito group `wearers`, sees only their own data at `/me` | Cognito group `supervisors`, sees the whole group at `/console` |
+| On RED | The watch alerts the wearer; a button on `/me` confirms "I've stopped and I'm cooling down" | The supervisor is emailed with a voice alert and acknowledges in the console |
+| No response in 90 s | The wearer's emergency contact is emailed | The backup contact is emailed |
+| Afterwards | Personal run history and session reports | Command view, incident log and session reports |
+
+Solo wearers never appear in the group roster or the public demo, and a wearer sign-in gets `403` on every group route.
 
 ## What it does
 
@@ -66,11 +86,11 @@ More detail: [`docs/architecture.md`](docs/architecture.md). The risk engine is 
 | Step Functions (Standard) | Escalation: notify → wait for acknowledgement → escalate → wait for confirmed recovery → close |
 | EventBridge Scheduler | Refreshes site heat and air every 10 min |
 | Amazon Polly (neural Kajal, en-IN + hi-IN) | Spoken alert in English and Hindi |
-| Amazon SNS (email) | Alerts the supervisor, then the backup contact |
+| Amazon SNS (email) | Alerts the supervisor, then the backup contact (or a solo wearer's emergency contact) |
 | Amazon Bedrock (Converse, Nova Lite via APAC profile) | Writes the incident report from logged facts only (template fallback) |
 | Amazon S3 | Alert audio |
 | Amazon CloudFront | Dashboard CDN when enabled (`-c cloudFront=true`); see Known limits |
-| Amazon Cognito | Supervisor sign-in |
+| Amazon Cognito | Sign-in with two groups: `supervisors` (group console) and `wearers` (own data only) |
 | AWS Secrets Manager | Holds the device token |
 | CloudWatch + X-Ray (Powertools for AWS Lambda) | Logs, custom metrics, a `WristHeat` dashboard, traces |
 | AWS CDK (TypeScript) / CloudFormation | The entire stack as code, one deploy command |
@@ -101,7 +121,8 @@ make test                                  # engine, API, escalation, simulator
 
 # Deploy (emails in a git-ignored .env.deploy: WH_SUPERVISOR_EMAIL=…, WH_BACKUP_EMAIL=…)
 bash scripts/deploy.sh                     # bootstraps CDK if needed, builds layers + dashboard, deploys
-.venv/bin/python scripts/seed.py --name "<wearer>" --age <n> --supervisor-email <email>
+.venv/bin/python scripts/seed.py --name "<wearer>" --age <n> --supervisor-email <email> \
+    --wearer-username <name> --wearer-email <email>   # optional: solo wearer sign-in linked to T1
 .venv/bin/python scripts/smoke.py          # → OK GREEN
 ```
 

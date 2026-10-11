@@ -17,6 +17,7 @@ export function Live({ roster, error, readOnly = false }: { roster: Roster | nul
   const pm25 = roster.site?.env?.pm25 ?? null;
   return (
     <main id="main" className="page">
+      <h1 className="sr-only">Group view</h1>
       <SiteStrip site={roster.site} readOnly={readOnly} />
       <TodayPanel site={roster.site} serverTime={roster.server_time} />
       {error && <p className="warn" role="alert">Connection problem: {error}. Showing the last data received.</p>}

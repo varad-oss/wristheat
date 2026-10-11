@@ -27,6 +27,7 @@ describe('Landing page', () => {
       'Pilgrims, runners and crowds', 'India, summer 2024']) {
       expect(screen.getByRole('heading', { name: who })).toBeInTheDocument();
     }
+    expect(screen.getByRole('link', { name: 'WHO, 2000–2019 average' })).toHaveAttribute('href', expect.stringContaining('who.int'));
     expect(screen.getByRole('link', { name: 'ILO, 2024' })).toHaveAttribute('href', expect.stringContaining('ilo.org'));
     for (const h of ['On your own', 'With a group', 'Plan around the heat, before anyone starts']) {
       expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
@@ -41,6 +42,7 @@ describe('Public demo', () => {
   it('shows only simulated trainees, labelled, with no supervisor actions', async () => {
     at('/demo');
     expect(await screen.findByText('Kabir')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Group view' })).toBeInTheDocument();
     expect(screen.getByText('Public demo. All trainees here are SIMULATED. Real wearers are visible only to signed-in supervisors.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Acknowledge/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Refresh heat data' })).not.toBeInTheDocument();

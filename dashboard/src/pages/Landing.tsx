@@ -49,7 +49,7 @@ export function Landing() {
             </div>
           </div>
           <figure className="hero-visual">
-            <img className="hero-shot" fetchPriority="high" src="/landing/command.png" width={1232} height={978}
+            <img className="hero-shot" {...{ fetchpriority: "high" }} src="/landing/command.png" width={2304} height={1322}
                  alt="Supervisor console: group status counts, a list of who needs action now, and live trainee cards" />
             <img className="hero-watch" src="/landing/watch-amber.png" width={450} height={450}
                  alt="Galaxy Watch showing SLOW DOWN with advice to drink water" />
@@ -58,7 +58,7 @@ export function Landing() {
 
         <section className="scale" aria-labelledby="scale-title">
           <h2 id="scale-title" className="scale-lead"><span className="num">489,000</span> people die from heat in an average year.</h2>
-          <p className="scale-sub">A heat warning gives everyone the same number. The people below cannot tell when their own body is at its limit, and neither can the person responsible for them.</p>
+          <p className="scale-sub">A heat warning gives everyone the same number. The people below cannot tell when their own body is at its limit, and neither can the person responsible for them. <a className="scale-src" href="https://www.who.int/news-room/fact-sheets/detail/climate-change-heat-and-health" target="_blank" rel="noreferrer">WHO, 2000–2019 average</a></p>
           <div className="scale-grid">
             {STATS.map((x) => (
               <article key={x.who} className={`stat ${x.wide ? 'stat-wide' : ''}`}>

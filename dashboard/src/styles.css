@@ -385,6 +385,7 @@ h1, h2, h3 { text-wrap: balance; }
 .stat-figure { font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; margin: 0; line-height: 1; color: #fff; }
 .stat h3 { font-size: 1.02rem; margin: 8px 0 6px; color: #f0b9b2; font-weight: 600; }
 .stat p { margin: 0; color: #c9d3cf; line-height: 1.5; }
+.scale-src { color: #fff; font-size: 0.85rem; white-space: nowrap; }
 .stat a { color: #fff; font-size: 0.85rem; white-space: nowrap; }
 .modes { max-width: 1320px; margin: 0 auto; padding: 72px 24px 24px; display: grid; gap: 56px; }
 .mode { display: grid; gap: 32px; align-items: center; }
@@ -403,3 +404,5 @@ h1, h2, h3 { text-wrap: balance; }
   .plan { padding: 40px 16px 48px; }
   .scale { padding: 48px 16px; }
 }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
