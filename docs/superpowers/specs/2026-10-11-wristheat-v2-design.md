@@ -31,7 +31,7 @@ Unchanged: risk engine, watch contract (`contracts/`), escalation workflow, hone
   | state GREEN/RECOVERING/AMBER and `minutes_to_red` ≤ 10 | "{name}: ~{n} min to RED at this effort (model projection)." |
   | state RECOVERING | "Keep {name} resting until cleared." |
 
-  Empty list → "No action needed. Next check: {coolest/next window hint}" is out of scope; show "No action needed right now."
+  Empty list → "No action needed right now."
 - **Activity feed**: the last 20 state changes across the group, newest first, `hh:mm {name} → {STATE}` with SIMULATED/REPLAY badge where relevant.
   - Backend: ingest appends each engine event to `session.recent_events` (cap 20; `{t, event, state}`, `t = state_since`). Roster returns `activity` = merged, sorted, capped at 20, each item `{t, trainee_id, name, kind, source, event, state}`. Hidden trainees excluded.
 - Cards keep v1 content; visual hierarchy tightened (see §4).
