@@ -17,6 +17,9 @@ from wristheat.obs import logger, metric, tracer
 from wristheat.repo import OPEN_STATUSES, Repo, VersionConflict, ttl_for
 
 MAX_ATTEMPTS = 4
+EVENT_LOG_CAP = 20
+STATE_AFTER = {"CALIBRATED": "GREEN", "AMBER_ENTERED": "AMBER", "RED_ENTERED": "RED",
+               "RECOVERING_ENTERED": "RECOVERING", "RECOVERY_CONFIRMED": "GREEN"}
 JSON_HEADERS = {"content-type": "application/json; charset=utf-8"}
 
 
@@ -98,10 +101,13 @@ def process_ingest(body: dict, headers: dict, deps: Deps, now_ms: int) -> tuple[
                 new_incident = incidents.open_incident(trainee, sid, st, env, now_ms, flag=flag)
                 incident_id = new_incident["incident_id"]
 
+        log = list(session.get("recent_events") or [])
+        log += [{"t": (m + 1) * 60_000, "event": ev, "state": STATE_AFTER.get(ev, st.state)} for m, ev in res.events]
         response = build_response(tid, sid, len(accepted), dropped, st, env, incident_id, now_ms)
         st.pending_alert = "NONE"  # the one-shot alert is consumed by this response
         session.update(engine=st.to_dict(), state=st.state, state_since=st.state_since, pending_alert="NONE",
                        incident_id=incident_id, hr_now=st.hr_now, last_seen=now_ms,
+                       recent_events=log[-EVENT_LOG_CAP:],
                        ttl=ttl_for("sessions", now_ms))
         try:
             if created:

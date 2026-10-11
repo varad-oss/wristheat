@@ -170,3 +170,25 @@ def test_handler_routes_and_utf8(monkeypatch):
     event = {"routeKey": "POST /v1/sessions/{session_id}/end", "headers": {"x-device-token": TOKEN},
              "pathParameters": {"session_id": SID}}
     assert ingest.handler(event, Ctx())["statusCode"] == 200
+
+
+def test_events_logged_on_session():
+    deps = make_deps("RED")
+    drive(deps, D_BASE[:14])
+    log = deps.repo.sessions[SID]["recent_events"]
+    names = [e["event"] for e in log]
+    assert names[:3] == ["CALIBRATED", "AMBER_ENTERED", "RED_ENTERED"]
+    assert all({"t", "event", "state"} <= set(e) for e in log)
+    assert next(e for e in log if e["event"] == "RED_ENTERED")["state"] == "RED"
+
+
+def test_event_log_capped_at_20():
+    deps = make_deps("RED")
+    drive(deps, D_BASE[:3])  # calibrated session exists
+    deps.repo.sessions[SID]["recent_events"] = [{"t": i, "event": "OLD", "state": "GREEN"} for i in range(25)]
+    samples = minutes_to_samples(D_BASE[:6])[3 * 60:]
+    for i in range(0, len(samples), 5):
+        chunk = samples[i:i + 5]
+        post(deps, body(chunk), chunk[-1][0])
+    log = deps.repo.sessions[SID]["recent_events"]
+    assert len(log) == 20 and log[-1]["event"] == "AMBER_ENTERED"

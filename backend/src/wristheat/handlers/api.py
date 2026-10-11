@@ -20,6 +20,7 @@ ACKABLE = ("NOTIFIED", "ESCALATED")
 PRIVATE_FIELDS = ("ack_token", "recovery_token", "ttl")
 CONSOLE = "https://ap-south-1.console.aws.amazon.com/states/home?region=ap-south-1#/v2/executions/details/"
 PRESIGN_S = 900
+ACTIVITY_CAP = 20
 
 
 @dataclass
@@ -49,7 +50,7 @@ def _site_payload(site: dict | None, now_ms: int) -> dict | None:
             "env": env_out, "forecast": site.get("forecast", [])}
 
 
-def _trainee_row(repo: Repo, t: dict, now_ms: int, open_by_session: dict) -> dict:
+def _trainee_row(repo: Repo, t: dict, now_ms: int, open_by_session: dict) -> tuple[dict, dict | None]:
     row = {"trainee_id": t["trainee_id"], "name": t.get("name"), "kind": t.get("kind", "real"), "source": None,
            "session_id": None, "state": None, "state_since": None, "hr_now": None, "hr0": None,
            "core_est_c": None, "core_band_c": 0.6, "psi": None, "minutes_to_red": None, "last_seen": None,
@@ -57,7 +58,7 @@ def _trainee_row(repo: Repo, t: dict, now_ms: int, open_by_session: dict) -> dic
     sid = t.get("current_session_id")
     s = repo.get_session(sid) if sid else None
     if not s:
-        return row
+        return row, None
     eng = s.get("engine") or {}
     calibrated = s.get("state") not in (None, "CALIBRATING") and eng.get("hr0") is not None
     row.update(source=s.get("source"), session_id=sid, state=s.get("state"), state_since=s.get("state_since"),
@@ -74,7 +75,7 @@ def _trainee_row(repo: Repo, t: dict, now_ms: int, open_by_session: dict) -> dic
         orig = repo.get_session(row["replay_of"])
         if orig:
             row.update(recorded_at=orig.get("started_at"), recorded_device=orig.get("device"))
-    return row
+    return row, s
 
 
 def _summary(inc: dict, site_env: dict | None) -> dict:
@@ -97,11 +98,20 @@ def roster(deps: Deps, now_ms: int) -> tuple[int, dict]:
     open_inc = sorted((i for i in incidents if i.get("status") in OPEN_STATUSES),
                       key=lambda i: i.get("opened_at", 0), reverse=True)
     open_by_session = {i.get("session_id"): i["incident_id"] for i in open_inc}
-    rows = [_trainee_row(deps.repo, t, now_ms, open_by_session)
-            for t in deps.repo.list_trainees() if not t.get("hidden")]
+    rows, activity = [], []
+    for t in deps.repo.list_trainees():
+        if t.get("hidden"):
+            continue
+        row, session = _trainee_row(deps.repo, t, now_ms, open_by_session)
+        rows.append(row)
+        for e in (session or {}).get("recent_events") or []:
+            activity.append({"t": e["t"], "trainee_id": row["trainee_id"], "name": row["name"], "kind": row["kind"],
+                             "source": row["source"], "event": e["event"], "state": e["state"]})
     rows.sort(key=lambda r: (STATE_ORDER.get(r["state"], 5), r["trainee_id"]))
+    activity.sort(key=lambda a: a["t"], reverse=True)
     return 200, {"site": _site_payload(site, now_ms), "trainees": rows,
                  "open_incidents": [_summary(i, (site or {}).get("env")) for i in open_inc],
+                 "activity": activity[:ACTIVITY_CAP],
                  "server_time": now_ms}
 
 

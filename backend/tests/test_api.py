@@ -150,3 +150,17 @@ class _Payload:
 
     def read(self):
         return self.data
+
+
+def test_roster_activity_sorted_and_excludes_hidden():
+    deps = make_deps()
+    deps.repo.sessions["sT1-aaaaaaaa"]["recent_events"] = [{"t": NOW - 300_000, "event": "AMBER_ENTERED", "state": "AMBER"}]
+    deps.repo.sessions["sS3-aaaaaaaa"]["recent_events"] = [
+        {"t": NOW - 600_000, "event": "AMBER_ENTERED", "state": "AMBER"},
+        {"t": NOW - 60_000, "event": "RED_ENTERED", "state": "RED"}]
+    deps.repo.sessions["sS0-aaaaaaaa"]["recent_events"] = [{"t": NOW, "event": "CALIBRATED", "state": "GREEN"}]
+    _, out = call(deps, "GET /v1/roster")
+    act = out["activity"]
+    assert [(a["trainee_id"], a["event"]) for a in act] == [("S3", "RED_ENTERED"), ("T1", "AMBER_ENTERED"), ("S3", "AMBER_ENTERED")]
+    assert act[0]["name"] == "Kabir" and act[0]["kind"] == "simulated" and act[0]["source"] == "simulated"
+    assert act[0]["state"] == "RED" and len(act) <= 20
