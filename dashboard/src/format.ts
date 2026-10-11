@@ -38,3 +38,12 @@ export function stateRank(s: State | null): number {
 export const STATE_LABEL: Record<State, string> = {
   RED: 'RED', AMBER: 'AMBER', GREEN: 'GREEN', RECOVERING: 'RECOVERING', CALIBRATING: 'CALIBRATING',
 };
+
+/** Elapsed time for "Signal lost …": seconds under 2 min, then minutes, then hours and minutes. */
+export function elapsed(s: number | null): string {
+  if (s === null) return '–';
+  if (s < 120) return `${s} s`;
+  const min = Math.round(s / 60);
+  if (min < 90) return `${min} min`;
+  return `${Math.floor(min / 60)} h ${min % 60} min`;
+}

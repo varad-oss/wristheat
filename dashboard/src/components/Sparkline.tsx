@@ -3,7 +3,7 @@ import { getSeries } from '../api';
 import type { MinutePoint } from '../types';
 
 /** 30-minute estimated-core sparkline, refreshed every 30 s. */
-export function Sparkline({ sessionId, colour }: { sessionId: string | null; colour: string }) {
+export function Sparkline({ sessionId, colour, stale = false }: { sessionId: string | null; colour: string; stale?: boolean }) {
   const [points, setPoints] = useState<MinutePoint[]>([]);
   useEffect(() => {
     if (!sessionId) return;
@@ -15,7 +15,9 @@ export function Sparkline({ sessionId, colour }: { sessionId: string | null; col
     return () => { alive = false; window.clearInterval(id); };
   }, [sessionId]);
   const vals = points.filter((p) => p.hr !== null).map((p) => p.core_est_c);
-  if (vals.length < 2) return <div className="spark spark-empty">Core trend appears after 2 min</div>;
+  if (vals.length < 2) {
+    return <div className="spark spark-empty">{stale ? 'No readings in the last 30 min' : 'Core trend appears after 2 min'}</div>;
+  }
   const lo = Math.min(36.8, ...vals), hi = Math.max(38.6, ...vals);
   const w = 200, h = 36;
   const d = vals.map((v, i) => `${i ? 'L' : 'M'}${(i / (vals.length - 1)) * w},${h - ((v - lo) / (hi - lo)) * h}`).join(' ');

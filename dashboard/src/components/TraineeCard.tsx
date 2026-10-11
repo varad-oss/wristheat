@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { elapsed } from '../format';
 import type { TraineeRow } from '../types';
 import { PsiBar } from './PsiBar';
 import { SourceBadge } from './SourceBadge';
@@ -32,9 +33,9 @@ export function TraineeCard({ t, serverTime }: { t: TraineeRow; serverTime: numb
           {t.minutes_to_red !== null && (
             <p className="projection">~{t.minutes_to_red} min to RED at this effort (model projection)</p>
           )}
-          <Sparkline sessionId={t.session_id} colour={colour} />
+          <Sparkline sessionId={t.session_id} colour={colour} stale={t.stale} />
           <p className={t.stale ? 'seen lost' : 'seen'}>
-            {t.stale ? `Signal lost ${ago ?? '–'} s` : `Last reading ${ago ?? '–'} s ago`}
+            {t.stale ? `Signal lost ${elapsed(ago)}` : `Last reading ${elapsed(ago)} ago`}
           </p>
         </>
       ) : (

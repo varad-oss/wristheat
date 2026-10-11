@@ -39,6 +39,22 @@ describe('Live group view', () => {
     expect(screen.getByText(/Signal lost 45 s/)).toBeInTheDocument();
   });
 
+  it('shows long signal loss in minutes', () => {
+    renderLive(roster([trainee({ stale: true, last_seen: 1791700066000 - 2856000 })]));
+    expect(screen.getByText('Signal lost 48 min')).toBeInTheDocument();
+  });
+
+  it('shows hours for very long signal loss', () => {
+    renderLive(roster([trainee({ stale: true, last_seen: 1791700066000 - (2 * 3600 + 5 * 60) * 1000 })]));
+    expect(screen.getByText('Signal lost 2 h 5 min')).toBeInTheDocument();
+  });
+
+  it('says there is no recent data when a stale trainee has no readings in 30 min', async () => {
+    renderLive(roster([trainee({ stale: true, last_seen: 1791700066000 - 2856000 })]));
+    expect(await screen.findByText('No readings in the last 30 min')).toBeInTheDocument();
+    expect(screen.queryByText(/Core trend appears/)).not.toBeInTheDocument();
+  });
+
   it('shows "~6 min to RED (model projection)" when minutes_to_red = 6', () => {
     renderLive(roster([trainee({ state: 'AMBER', minutes_to_red: 6 })]));
     expect(screen.getByText(/~6 min to RED.*\(model projection\)/)).toBeInTheDocument();
