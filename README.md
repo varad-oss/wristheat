@@ -8,6 +8,8 @@ Built for **AWS Environmental Hacks 2026** (Heat & Water track). Research protot
 
 | | |
 |---|---|
+| **Demo video** | https://youtu.be/km2n0f3IRJk |
+| **Blog** (AWS Builder Center) | [We almost got bitten by a snake, yet the hard part was streaming the heart rate](https://builder.aws.com/content/3KYZIqiseHRSfzaBh86upmYBAU1/we-almost-got-bitten-by-a-snake-yet-the-hard-part-was-streaming-the-heart-rate) |
 | **Live site** | https://vvs0o13cs4.execute-api.ap-south-1.amazonaws.com |
 | **Public demo** (simulated group, no sign-in) | https://vvs0o13cs4.execute-api.ap-south-1.amazonaws.com/demo |
 | **How the estimate works** | https://vvs0o13cs4.execute-api.ap-south-1.amazonaws.com/method |
