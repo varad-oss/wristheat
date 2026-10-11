@@ -2,15 +2,17 @@ import { useEffect, useState } from 'react';
 import { getRoster } from './api';
 import type { Roster } from './types';
 
-/** Polls GET /v1/roster every 3 s; pauses while the tab is hidden. */
+/** Loads the roster at once, then polls every 3 s while the tab is visible. */
 export function useRoster(intervalMs = 3000, load: () => Promise<Roster> = getRoster) {
   const [roster, setRoster] = useState<Roster | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
     let timer: number | undefined;
+    let first = true;
     const tick = async () => {
-      if (document.visibilityState === 'visible') {
+      if (first || document.visibilityState === 'visible') {
+        first = false;
         try {
           const r = await load();
           if (alive) { setRoster(r); setError(null); }
