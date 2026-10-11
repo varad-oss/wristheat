@@ -60,3 +60,10 @@ test('API throttling 20/40', () => {
     DefaultRouteSettings: Match.objectLike({ ThrottlingRateLimit: 20, ThrottlingBurstLimit: 40 }),
   });
 });
+
+test('context Lambda runs every 10 minutes', () => {
+  template.hasResourceProperties('AWS::Scheduler::Schedule', { ScheduleExpression: 'rate(10 minutes)' });
+  template.hasResourceProperties('AWS::Lambda::Function', Match.objectLike({
+    Handler: 'wristheat.handlers.context.handler', MemorySize: 1024, Timeout: 60,
+  }));
+});

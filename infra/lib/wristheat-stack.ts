@@ -1,5 +1,6 @@
 import { CfnOutput, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { Context } from './context';
 import { Data } from './data';
 import { IngestApi } from './ingest-api';
 import { Layers } from './layers';
@@ -17,6 +18,7 @@ export class WristHeatStack extends Stack {
     const data = new Data(this, 'Data');
     const layers = new Layers(this, 'Layers', props.buildDir);
     const ingest = new IngestApi(this, 'Ingest', { buildDir: props.buildDir, data, layers, siteId });
+    const context = new Context(this, 'Context', { buildDir: props.buildDir, data, layers, siteId });
 
     const out = (name: string, value: string) => new CfnOutput(this, name, { value });
     out('ApiUrl', ingest.api.apiEndpoint);
@@ -28,5 +30,6 @@ export class WristHeatStack extends Stack {
     out('TableMinutes', data.minutes.tableName);
     out('TableIncidents', data.incidents.tableName);
     out('AudioBucketName', data.audioBucket.bucketName);
+    out('ContextFunctionName', context.fn.functionName);
   }
 }
