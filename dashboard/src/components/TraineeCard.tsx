@@ -34,6 +34,7 @@ export function TraineeCard({ t, serverTime }: { t: TraineeRow; serverTime: numb
             <p className="projection">~{t.minutes_to_red} min to RED at this effort (model projection)</p>
           )}
           <Sparkline sessionId={t.session_id} colour={colour} stale={t.stale} />
+          <p className="card-links"><Link to={`/sessions/${t.session_id}/report`}>Session report</Link></p>
           <p className={t.stale ? 'seen lost' : 'seen'}>
             {t.stale ? `Signal lost ${elapsed(ago)}` : `Last reading ${elapsed(ago)} ago`}
           </p>

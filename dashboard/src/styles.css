@@ -232,3 +232,20 @@ h2 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; }
 @media (min-width: 1000px) { .today-plan { grid-column: 1; } .rules { grid-column: 2; grid-row: 1; } }
 .today-plan { display: flex; flex-direction: column; gap: 10px; }
 @media (min-width: 1200px) { .command { grid-template-rows: auto 1fr; } .command .feed { align-self: start; } }
+
+/* ---- v2: session report ------------------------------------------------------------------------------ */
+.report-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.report-block { margin: 18px 0; }
+.statebar { display: flex; gap: 2px; border-radius: 4px; overflow: hidden; }
+.statebar-seg { color: #fff; font-family: var(--font-num); font-weight: 700; padding: 8px 10px; white-space: nowrap; min-width: max-content; }
+.report-incidents { list-style: none; padding: 0; margin: 0; }
+.report-incidents li { border-left: 4px solid var(--red); padding: 4px 0 4px 12px; margin-bottom: 12px; }
+.report-incidents p { margin: 2px 0; }
+@media print {
+  .no-print, .top, .alerts, .footer button { display: none !important; }
+  body { background: #fff; }
+  .page { padding: 0; max-width: none; }
+  .statebar-seg { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .tiles div, .report-block { break-inside: avoid; }
+}
+.card-links { margin: 0; font-size: 0.9rem; }

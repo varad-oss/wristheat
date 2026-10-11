@@ -61,3 +61,16 @@ export interface Incident extends Omit<IncidentSummary, 'advice'> {
   summary: IncidentSummary;
   recovered_at?: number | null;
 }
+
+export interface SessionSummary {
+  session: { session_id: string; source: TraineeRow['source']; device: string | null; replay_of: string | null;
+             started_at: number; last_seen: number; status: string; state: State | null };
+  trainee: { trainee_id: string; name: string; kind: 'real' | 'simulated'; age: number | null };
+  started_at: number; last_seen: number; duration_min: number; hr0: number | null;
+  minutes_by_state: Record<State | 'gap', number>;
+  peak_psi: number | null; peak_core_c: number | null; peak_hr: number | null;
+  flag_minutes: Record<string, number>;
+  env_at_start: { wbgt_c: number | null; flag: Flag } | null;
+  incidents: (Pick<Incident, 'incident_id' | 'status' | 'opened_at' | 'closed_at' | 'outcome' | 'trigger' | 'metrics' |
+    'acked_at' | 'acked_by'> & { recovered_at: number | null; report_source: 'bedrock' | 'template' | null })[];
+}

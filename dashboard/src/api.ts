@@ -1,6 +1,6 @@
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { getConfig } from './config';
-import type { Incident, IncidentSummary, Roster, Series, SiteEnv } from './types';
+import type { Incident, IncidentSummary, Roster, Series, SessionSummary, SiteEnv } from './types';
 
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) {
@@ -29,3 +29,5 @@ export const getIncident = (id: string) => call<Incident>(`/v1/incidents/${encod
 export const ackIncident = (id: string, note: string) =>
   call<{ status: string }>(`/v1/incidents/${encodeURIComponent(id)}/ack`, { method: 'POST', body: JSON.stringify({ note }) });
 export const refreshContext = () => call<{ env: SiteEnv | null }>('/v1/context/refresh', { method: 'POST' });
+export const getSessionSummary = (sessionId: string) =>
+  call<SessionSummary>(`/v1/sessions/${encodeURIComponent(sessionId)}/summary`);

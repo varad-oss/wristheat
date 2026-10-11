@@ -5,6 +5,7 @@ import { IncidentDetail } from './pages/IncidentDetail';
 import { Incidents } from './pages/Incidents';
 import { Live } from './pages/Live';
 import { Method } from './pages/Method';
+import { SessionReport } from './pages/SessionReport';
 import { TraineeDetail } from './pages/TraineeDetail';
 import { useRoster } from './useRoster';
 
@@ -31,6 +32,7 @@ export function App({ user, onSignOut }: { user: string; onSignOut: () => void }
         <Route path="/incidents" element={<Incidents />} />
         <Route path="/incidents/:id" element={<IncidentDetail />} />
         <Route path="/method" element={<Method />} />
+        <Route path="/sessions/:id/report" element={<SessionReport />} />
         <Route path="*" element={<main className="page"><p>Page not found.</p></main>} />
       </Routes>
       <Footer />
