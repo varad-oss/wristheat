@@ -4,7 +4,7 @@ A supervisor watches a group exerting in heat; each wearer's own smartwatch stre
 
 Built for AWS Environmental Hacks (Heat & Water track), 11 Oct 2026. Prototype, not a medical device.
 
-- **Live dashboard:** `DashboardUrl` from `infra/outputs.json` after deploy (link added at submission)
+- **Live dashboard:** https://vvs0o13cs4.execute-api.ap-south-1.amazonaws.com (supervisor sign-in required)
 - **Spec:** [`docs/superpowers/specs/2026-10-11-wristheat-design.md`](docs/superpowers/specs/2026-10-11-wristheat-design.md) · **Plan:** [`docs/superpowers/plans/2026-10-11-wristheat-cloud.md`](docs/superpowers/plans/2026-10-11-wristheat-cloud.md)
 - **Architecture:** [`docs/architecture.md`](docs/architecture.md)
 
