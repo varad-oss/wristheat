@@ -21,6 +21,19 @@ const r = roster([
   advice: { en: 'Stop now. Rest in shade and cool down with water.', hi: 'अभी रुकें। छाँव में आराम करें और पानी से शरीर ठंडा करें।' },
 }]);
 
+r.site!.env!.flag = 'YELLOW'; r.site!.env!.wbgt_c = 30.4; r.site!.env!.pm25 = 49;
+r.site!.forecast = Array.from({ length: 24 }, (_, i) => {
+  const t = NOW - (NOW % 3600000) + i * 3600000;
+  const h = (new Date(t).getUTCHours() + 5.5) % 24;
+  const flag = h >= 19 || h < 6 ? 'NONE' : h < 8 ? 'GREEN' : h < 10 ? 'YELLOW' : h < 16 ? 'RED' : 'YELLOW';
+  return { t, wbgt_c: 26 + (flag === 'RED' ? 5 : flag === 'YELLOW' ? 4 : 2), flag: flag as 'NONE' };
+});
+r.activity = [
+  { t: NOW - 90000, trainee_id: 'S3', name: 'Kabir', kind: 'simulated', source: 'simulated', event: 'RED_ENTERED', state: 'RED' },
+  { t: NOW - 400000, trainee_id: 'T1', name: 'Varad', kind: 'real', source: 'live', event: 'AMBER_ENTERED', state: 'AMBER' },
+  { t: NOW - 900000, trainee_id: 'S4', name: 'Ishaan', kind: 'simulated', source: 'simulated', event: 'RECOVERING_ENTERED', state: 'RECOVERING' },
+];
+
 createRoot(document.getElementById('root')!).render(
   <MemoryRouter>
     <header className="top"><span className="brand">WristHeat</span></header>

@@ -68,9 +68,10 @@ describe('Live group view', () => {
 
   it('shows the site WBGT with its flag in words', () => {
     renderLive();
-    expect(screen.getByText('31.4')).toBeInTheDocument();
-    expect(screen.getByText(/RED flag/)).toBeInTheDocument();
-    expect(screen.getByText(/Open-field WBGT \(sun\), Liljegren method/)).toBeInTheDocument();
+    const strip = within(screen.getByRole('region', { name: 'Site heat and air' }));
+    expect(strip.getByText('31.4')).toBeInTheDocument();
+    expect(strip.getByText(/RED flag/)).toBeInTheDocument();
+    expect(strip.getByText(/Open-field WBGT \(sun\), Liljegren method/)).toBeInTheDocument();
   });
 
   it('footer contains the exact attribution string', () => {
