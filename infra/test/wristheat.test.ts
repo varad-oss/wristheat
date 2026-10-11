@@ -7,7 +7,7 @@ import { WristHeatStack } from '../lib/wristheat-stack';
 
 function fakeBuildDir(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wh-build-'));
-  for (const d of ['app/wristheat', 'layer-core/python', 'layer-sci/python', 'dashboard']) {
+  for (const d of ['app/wristheat', 'layer-core/python', 'layer-sci/python', 'dashboard', 'web/wristheat']) {
     fs.mkdirSync(path.join(dir, d), { recursive: true });
   }
   fs.writeFileSync(path.join(dir, 'app/wristheat/__init__.py'), '');
@@ -98,16 +98,26 @@ test('escalation state machine waits for task tokens and emails two topics', () 
   }));
 });
 
-test('dashboard on CloudFront with SPA fallback and CORS for its domain', () => {
-  template.resourceCountIs('AWS::CloudFront::Distribution', 1);
-  template.hasResourceProperties('AWS::CloudFront::Distribution', {
+test('default: dashboard served by the API $default route, no CloudFront', () => {
+  template.resourceCountIs('AWS::CloudFront::Distribution', 0);
+  template.hasResourceProperties('AWS::ApiGatewayV2::Route', { RouteKey: '$default', AuthorizationType: 'NONE' });
+  template.hasResourceProperties('AWS::Lambda::Function', Match.objectLike({ Handler: 'wristheat.handlers.web.handler' }));
+  template.hasOutput('DashboardUrl', {});
+});
+
+test('cloudFront=true: dashboard on CloudFront with SPA fallback and CORS for its domain', () => {
+  const app = new App({ context: { cloudFront: 'true' } });
+  const cf = Template.fromStack(new WristHeatStack(app, 'CfStack', {
+    env: { account: '123456789012', region: 'ap-south-1' }, buildDir: fakeBuildDir(),
+  }));
+  cf.resourceCountIs('AWS::CloudFront::Distribution', 1);
+  cf.hasResourceProperties('AWS::CloudFront::Distribution', {
     DistributionConfig: Match.objectLike({
       DefaultRootObject: 'index.html',
       CustomErrorResponses: Match.arrayWith([Match.objectLike({ ErrorCode: 404, ResponseCode: 200, ResponsePagePath: '/index.html' })]),
     }),
   });
-  template.hasOutput('DashboardUrl', {});
-  const api = Object.values(template.findResources('AWS::ApiGatewayV2::Api'))[0] as any;
+  const api = Object.values(cf.findResources('AWS::ApiGatewayV2::Api'))[0] as any;
   const origins = JSON.stringify(api.Properties.CorsConfiguration.AllowOrigins);
   expect(origins).toContain('http://localhost:5173');
   expect(origins).toContain('DomainName');

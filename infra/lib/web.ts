@@ -1,5 +1,8 @@
 import * as path from 'path';
 import { Duration, RemovalPolicy } from 'aws-cdk-lib';
+import * as apigw from 'aws-cdk-lib/aws-apigatewayv2';
+import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -45,6 +48,32 @@ export class Web extends Construct {
       distribution: this.distribution,
       distributionPaths: ['/*'],
       memoryLimit: 512,
+    });
+  }
+}
+
+/**
+ * Fallback hosting while CloudFront is unavailable on the account: the HTTP API's $default route serves
+ * the SPA from a Lambda (same origin as the API, HTTPS via execute-api, no CORS needed).
+ */
+export class ApiWeb extends Construct {
+  constructor(scope: Construct, id: string, props: {
+    buildDir: string; api: apigw.HttpApi; userPoolId: string; userPoolClientId: string; layers: lambda.ILayerVersion[];
+  }) {
+    super(scope, id);
+    const fn = new lambda.Function(this, 'WebFn', {
+      runtime: lambda.Runtime.PYTHON_3_12,
+      architecture: lambda.Architecture.ARM_64,
+      code: lambda.Code.fromAsset(path.join(props.buildDir, 'web')),
+      handler: 'wristheat.handlers.web.handler',
+      memorySize: 256,
+      timeout: Duration.seconds(10),
+      environment: { USER_POOL_ID: props.userPoolId, USER_POOL_CLIENT_ID: props.userPoolClientId },
+    });
+    new apigw.HttpRoute(this, 'DefaultRoute', {
+      httpApi: props.api,
+      routeKey: apigw.HttpRouteKey.DEFAULT,
+      integration: new HttpLambdaIntegration('WebIntegration', fn),
     });
   }
 }

@@ -7,7 +7,7 @@ import { Escalation } from './escalation';
 import { IngestApi } from './ingest-api';
 import { Layers } from './layers';
 import { Observability } from './observability';
-import { Web } from './web';
+import { ApiWeb, Web } from './web';
 
 export interface WristHeatStackProps extends StackProps {
   /** Directory produced by scripts/build_lambdas.sh (app/, layer-core/, layer-sci/, dashboard/). */
@@ -21,13 +21,15 @@ export class WristHeatStack extends Stack {
 
     const data = new Data(this, 'Data');
     const layers = new Layers(this, 'Layers', props.buildDir);
-    const web = new Web(this, 'Web');
-    const corsOrigins = ['http://localhost:5173', web.url];
+    // CloudFront needs account verification on new accounts; until then the API serves the dashboard.
+    const useCloudFront = String(this.node.tryGetContext('cloudFront') ?? 'false') === 'true';
+    const web = useCloudFront ? new Web(this, 'Web') : undefined;
+    const corsOrigins = ['http://localhost:5173', ...(web ? [web.url] : [])];
     const ingest = new IngestApi(this, 'Ingest', { buildDir: props.buildDir, data, layers, siteId, corsOrigins });
     const context = new Context(this, 'Context', { buildDir: props.buildDir, data, layers, siteId });
     const auth = new Auth(this, 'Auth');
     const apiFn = ingest.addSupervisorApi(auth, context.fn);
-    const dashboardUrl = web.url;
+    const dashboardUrl = web ? web.url : ingest.api.apiEndpoint;
     const escalation = new Escalation(this, 'Escalation', {
       buildDir: props.buildDir, data, layers, siteId, dashboardUrl,
       ackTimeoutSeconds: Number(this.node.tryGetContext('ackTimeoutSeconds') ?? 90),
@@ -43,10 +45,17 @@ export class WristHeatStack extends Stack {
       functions: [ingest.ingestFn, apiFn, context.fn, ...escalation.functions],
       stateMachine: escalation.stateMachine,
     });
-    web.deploy(props.buildDir, {
-      apiUrl: ingest.api.apiEndpoint, region: this.region,
-      userPoolId: auth.userPool.userPoolId, userPoolClientId: auth.client.userPoolClientId,
-    });
+    if (web) {
+      web.deploy(props.buildDir, {
+        apiUrl: ingest.api.apiEndpoint, region: this.region,
+        userPoolId: auth.userPool.userPoolId, userPoolClientId: auth.client.userPoolClientId,
+      });
+    } else {
+      new ApiWeb(this, 'ApiWeb', {
+        buildDir: props.buildDir, api: ingest.api, layers: [],
+        userPoolId: auth.userPool.userPoolId, userPoolClientId: auth.client.userPoolClientId,
+      });
+    }
 
     const out = (name: string, value: string) => new CfnOutput(this, name, { value });
     out('ApiUrl', ingest.api.apiEndpoint);
@@ -60,6 +69,6 @@ export class WristHeatStack extends Stack {
     out('AudioBucketName', data.audioBucket.bucketName);
     out('ContextFunctionName', context.fn.functionName);
     out('StateMachineArn', escalation.stateMachine.stateMachineArn);
-    out('DashboardUrl', web.url);
+    out('DashboardUrl', dashboardUrl);
   }
 }
