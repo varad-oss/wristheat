@@ -22,3 +22,5 @@ infra/outputs.json
 wear/app/build/
 .superpowers/
 *.tsbuildinfo
+.playwright-mcp/
+dashboard/public/config.json

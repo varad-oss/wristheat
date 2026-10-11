@@ -49,7 +49,7 @@ function IncidentAlert({ inc }: { inc: IncidentSummary }) {
     <div className={`alert ${acknowledged ? 'alert-acked' : ''}`} role="alert">
       <div className="alert-main">
         <p className="alert-title">
-          <Link to={`/incidents/${inc.incident_id}`}>{`${inc.trainee_name}: STOP — heat strain RED`}</Link>
+          <Link to={`/console/incidents/${inc.incident_id}`}>{`${inc.trainee_name}: STOP — heat strain RED`}</Link>
           {inc.trainee_kind === 'simulated' && <span className="badge badge-sim">SIMULATED</span>}
         </p>
         <p className="alert-numbers num">

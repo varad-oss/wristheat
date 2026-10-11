@@ -37,7 +37,7 @@ export function TraineeDetail({ roster }: { roster: Roster | null }) {
   const incidents = (roster?.open_incidents ?? []).filter((i) => i.session_id === t.session_id);
   return (
     <main className="page">
-      <p><Link to="/">Group view</Link></p>
+      <p><Link to="/console">Group view</Link></p>
       <h1 className="inc-title">{t.name} <SourceBadge t={t} /> <StateChip state={t.state} /></h1>
       <p className="inc-sub">Heart rate (left) and estimated core with its ± 0.6 °C band (right). Background shows the state; the strip shows the heat flag.</p>
       {data.length < 2 ? <p>The chart appears after two closed minutes.</p> : (

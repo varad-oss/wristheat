@@ -33,7 +33,7 @@ export function ReportView({ s }: { s: SessionSummary }) {
 
   return (
     <main className="page report-page">
-      <p className="no-print"><Link to="/">Group view</Link></p>
+      <p className="no-print"><Link to="/console">Group view</Link></p>
       <header className="report-head">
         <div>
           <h1 className="inc-title">{s.trainee.name} <SourceBadge t={tb} /></h1>
@@ -80,7 +80,7 @@ export function ReportView({ s }: { s: SessionSummary }) {
                 {i.metrics?.time_to_ack_s != null && <p>{`Acknowledged after ${duration(i.metrics.time_to_ack_s)}`}</p>}
                 {i.metrics?.time_to_recovery_s != null && <p>{`Recovery confirmed after ${duration(i.metrics.time_to_recovery_s)}`}</p>}
                 <p className="muted">{i.outcome ? OUTCOME[i.outcome] ?? i.outcome : 'Incident still open'}.{' '}
-                  <Link className="no-print" to={`/incidents/${i.incident_id}`}>Open incident</Link></p>
+                  <Link className="no-print" to={`/console/incidents/${i.incident_id}`}>Open incident</Link></p>
               </li>
             ))}
           </ul>

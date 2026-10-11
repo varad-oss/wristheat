@@ -23,7 +23,7 @@ export function Incidents() {
             {items.map((i) => (
               <tr key={i.incident_id}>
                 <td className="num">{hhmm(i.opened_at)}</td>
-                <td><Link to={`/incidents/${i.incident_id}`}>{i.trainee_name}</Link>{i.trainee_kind === 'simulated' && <> <span className="badge badge-sim">SIMULATED</span></>}</td>
+                <td><Link to={`/console/incidents/${i.incident_id}`}>{i.trainee_name}</Link>{i.trainee_kind === 'simulated' && <> <span className="badge badge-sim">SIMULATED</span></>}</td>
                 <td>{i.status}</td>
                 <td>{i.outcome?.replace(/_/g, ' ') ?? 'open'}</td>
               </tr>

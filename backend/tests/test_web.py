@@ -54,3 +54,10 @@ def test_config_json_is_same_origin(tmp_path, monkeypatch):
     cfg = json.loads(r["body"])
     assert cfg == {"apiUrl": "", "region": "ap-south-1", "userPoolId": "ap-south-1_abc", "userPoolClientId": "client123"}
     assert r["headers"]["cache-control"] == "no-cache"
+
+
+def test_unknown_api_path_is_json_404(tmp_path, monkeypatch):
+    setup_static(tmp_path, monkeypatch)
+    r = web.handler(event("/v1/public/unknown"), None)
+    assert r["statusCode"] == 404 and r["headers"]["content-type"].startswith("application/json")
+    assert json.loads(r["body"])["error"] == "not_found"

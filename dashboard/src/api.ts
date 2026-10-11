@@ -31,3 +31,11 @@ export const ackIncident = (id: string, note: string) =>
 export const refreshContext = () => call<{ env: SiteEnv | null }>('/v1/context/refresh', { method: 'POST' });
 export const getSessionSummary = (sessionId: string) =>
   call<SessionSummary>(`/v1/sessions/${encodeURIComponent(sessionId)}/summary`);
+
+/** Public read-only demo roster (simulated trainees only); no sign-in. */
+export async function getPublicRoster(): Promise<Roster & { public: true }> {
+  const res = await fetch(`${getConfig().apiUrl.replace(/\/$/, '')}/v1/public/roster`);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(res.status, body.error ?? 'error', body.message ?? `HTTP ${res.status}`);
+  return body;
+}

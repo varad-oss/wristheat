@@ -10,13 +10,13 @@ export const STATE_COLOUR: Record<string, string> = {
   GREEN: '#1f7a4d', AMBER: '#b26a00', RED: '#b42318', RECOVERING: '#1d5fa8', CALIBRATING: '#5d6b66',
 };
 
-export function TraineeCard({ t, serverTime }: { t: TraineeRow; serverTime: number }) {
+export function TraineeCard({ t, serverTime, readOnly = false }: { t: TraineeRow; serverTime: number; readOnly?: boolean }) {
   const colour = STATE_COLOUR[t.state ?? ''] ?? '#9aa5a0';
   const ago = t.last_seen ? Math.max(0, Math.round((serverTime - t.last_seen) / 1000)) : null;
   return (
     <article className={`card card-${(t.state ?? 'none').toLowerCase()}`} style={{ borderLeftColor: colour }}>
       <header className="card-head">
-        <h3><Link to={`/trainee/${t.trainee_id}`}>{t.name}</Link></h3>
+        <h3>{readOnly ? t.name : <Link to={`/console/trainee/${t.trainee_id}`}>{t.name}</Link>}</h3>
         <SourceBadge t={t} />
         <StateChip state={t.state} />
       </header>
@@ -33,8 +33,8 @@ export function TraineeCard({ t, serverTime }: { t: TraineeRow; serverTime: numb
           {t.minutes_to_red !== null && (
             <p className="projection">~{t.minutes_to_red} min to RED at this effort (model projection)</p>
           )}
-          <Sparkline sessionId={t.session_id} colour={colour} stale={t.stale} />
-          <p className="card-links"><Link to={`/sessions/${t.session_id}/report`}>Session report</Link></p>
+          {!readOnly && <Sparkline sessionId={t.session_id} colour={colour} stale={t.stale} />}
+          {!readOnly && <p className="card-links"><Link to={`/console/sessions/${t.session_id}/report`}>Session report</Link></p>}
           <p className={t.stale ? 'seen lost' : 'seen'}>
             {t.stale ? `Signal lost ${elapsed(ago)}` : `Last reading ${elapsed(ago)} ago`}
           </p>

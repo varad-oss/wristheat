@@ -6,7 +6,7 @@ import { FlagPennant } from './FlagPennant';
 
 type RefreshState = { kind: 'idle' } | { kind: 'loading' } | { kind: 'done'; at: number } | { kind: 'error'; msg: string };
 
-export function SiteStrip({ site }: { site: Site | null }) {
+export function SiteStrip({ site, readOnly = false }: { site: Site | null; readOnly?: boolean }) {
   const [refresh, setRefresh] = useState<RefreshState>({ kind: 'idle' });
   const env = site?.env ?? null;
   const flag = env && !env.stale ? env.flag : 'NONE';
@@ -44,9 +44,11 @@ export function SiteStrip({ site }: { site: Site | null }) {
         <span>{site?.name ?? 'Site not set up'}</span>
         <span>{env ? `Updated ${hhmm(env.updated_at)} · Open-Meteo` : 'No heat data yet'}</span>
         {env?.stale && <span className="warn">Heat data stale: the engine is using heart rate only</span>}
-        <button className="btn btn-quiet" onClick={onRefresh} disabled={refresh.kind === 'loading'}>
-          {refresh.kind === 'loading' ? 'Refreshing…' : 'Refresh heat data'}
-        </button>
+        {!readOnly && (
+          <button className="btn btn-quiet" onClick={onRefresh} disabled={refresh.kind === 'loading'}>
+            {refresh.kind === 'loading' ? 'Refreshing…' : 'Refresh heat data'}
+          </button>
+        )}
         {refresh.kind === 'done' && <span role="status">Updated {hhmm(refresh.at)}</span>}
         {refresh.kind === 'error' && <span role="alert" className="warn">Couldn't refresh: {refresh.msg}</span>}
       </div>

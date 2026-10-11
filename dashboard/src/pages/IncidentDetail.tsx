@@ -35,7 +35,7 @@ export function IncidentDetail() {
   ];
   return (
     <main className="page">
-      <p><Link to="/incidents">All incidents</Link></p>
+      <p><Link to="/console/incidents">All incidents</Link></p>
       <h1 className="inc-title">
         {inc.trainee_name} {inc.trainee_kind === 'simulated' && <span className="badge badge-sim">SIMULATED</span>}
       </h1>

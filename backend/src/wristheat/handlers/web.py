@@ -41,8 +41,8 @@ def handler(event, context):
         ctype = EXTRA_TYPES.get(target.suffix) or mimetypes.guess_type(target.name)[0] or "application/octet-stream"
         cache = "no-cache" if target.suffix == ".html" else "public, max-age=31536000, immutable"
         return _resp(200, target.read_bytes(), ctype, cache)
-    # Missing files under /assets are real 404s; any other path is an SPA route.
-    if path.startswith("/assets/") or "." in path.rsplit("/", 1)[-1]:
+    # Missing files, assets and unknown API paths are real 404s; any other path is an SPA route.
+    if path.startswith(("/assets/", "/v1/")) or "." in path.rsplit("/", 1)[-1]:
         return _resp(404, json.dumps({"error": "not_found", "message": path}), "application/json; charset=utf-8", "no-cache")
     index = root / "index.html"
     if not index.is_file():
