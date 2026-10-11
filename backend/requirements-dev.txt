@@ -1,0 +1,6 @@
+pytest
+jsonschema
+boto3
+numpy>=2,<3
+thermofeel==2.3.0
+aws-lambda-powertools[tracer]==3.*

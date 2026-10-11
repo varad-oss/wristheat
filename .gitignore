@@ -1,0 +1,23 @@
+# secrets and local config
+local.properties
+.env*
+*.keystore
+# build outputs
+cdk.out/
+build/
+dist/
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+# runtime state
+scripts/.seed-output.json
+simulator/.state.json
+infra/outputs.json
+# IDE / OS
+.gradle/
+.idea/
+.DS_Store
+wear/app/build/
+.superpowers/

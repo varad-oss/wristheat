@@ -1,0 +1,9 @@
+{
+  "schema": 1, "trainee_id": "T1", "session_id": "3f6c1e9a-0b7d-4a51-9a52-0c3c0d2f8e11",
+  "accepted": 5, "dropped": 0, "state": "RED", "state_since": 1791701140000,
+  "calibration_remaining_s": 0, "hr_now": 168, "hr0": 74, "core_est_c": 38.06, "core_band_c": 0.6,
+  "psi": 6.3, "minutes_to_red": null,
+  "env": {"wbgt_c": 31.4, "flag": "RED", "pm25": 72.0, "us_aqi": 158, "updated_at": 1791700800000, "stale": false},
+  "advice": {"en": "Stop now. Rest indoors — outdoor air is poor (PM2.5 72 µg/m³).", "hi": "अभी रुकें। अंदर आराम करें — बाहर की हवा खराब है (PM2.5 72 µg/m³)।"},
+  "alert": "RED", "incident_id": "inc-3f6c1e9a-1791701140000", "server_time": 1791701145100
+}

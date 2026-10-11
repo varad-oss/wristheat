@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wristheat/contracts/ingest_response.schema.json",
+  "title": "WristHeat ingest response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "trainee_id", "session_id", "accepted", "dropped", "state", "state_since",
+               "calibration_remaining_s", "hr_now", "hr0", "core_est_c", "core_band_c", "psi",
+               "minutes_to_red", "env", "advice", "alert", "incident_id", "server_time"],
+  "properties": {
+    "schema": {"const": 1},
+    "trainee_id": {"type": "string"},
+    "session_id": {"type": "string"},
+    "accepted": {"type": "integer", "minimum": 0},
+    "dropped": {"type": "integer", "minimum": 0},
+    "state": {"enum": ["CALIBRATING", "GREEN", "AMBER", "RED", "RECOVERING"]},
+    "state_since": {"type": "integer"},
+    "calibration_remaining_s": {"type": "integer", "minimum": 0, "maximum": 180},
+    "hr_now": {"type": ["integer", "null"]},
+    "hr0": {"type": ["integer", "null"]},
+    "core_est_c": {"type": ["number", "null"]},
+    "core_band_c": {"const": 0.6},
+    "psi": {"type": ["number", "null"], "minimum": 0, "maximum": 10},
+    "minutes_to_red": {"type": ["integer", "null"], "minimum": 1, "maximum": 90},
+    "env": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["wbgt_c", "flag", "pm25", "us_aqi", "updated_at", "stale"],
+          "properties": {
+            "wbgt_c": {"type": ["number", "null"]},
+            "flag": {"enum": ["NONE", "WHITE", "GREEN", "YELLOW", "RED", "BLACK"]},
+            "pm25": {"type": ["number", "null"]},
+            "us_aqi": {"type": ["integer", "null"]},
+            "updated_at": {"type": "integer"},
+            "stale": {"type": "boolean"}
+          }
+        }
+      ]
+    },
+    "advice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["en", "hi"],
+      "properties": {"en": {"type": "string"}, "hi": {"type": "string"}}
+    },
+    "alert": {"enum": ["NONE", "AMBER", "RED", "RECOVERED"]},
+    "incident_id": {"type": ["string", "null"]},
+    "server_time": {"type": "integer"}
+  }
+}
