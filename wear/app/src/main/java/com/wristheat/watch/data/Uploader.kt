@@ -71,6 +71,23 @@ class Uploader(
         }
     }
 
+    /**
+     * Sends everything still buffered, ignoring backoff (used when the session stops).
+     * Returns true when the buffer is empty; false when the network is still unreachable.
+     */
+    suspend fun flush(maxAttempts: Int = 10): Boolean {
+        repeat(maxAttempts) {
+            if (stopped) return false
+            if (buffer.oldestT() == null) return true
+            lastAttemptAt = null
+            delayMs = 0
+            val before = buffer.oldestT()
+            tick()
+            if (buffer.oldestT() == before) return false // not accepted: still offline
+        }
+        return buffer.oldestT() == null
+    }
+
     fun nextDelayMs(): Long = if (lastAttemptAt == null) 0L else delayMs
 
     fun bufferedSeconds(): Int {

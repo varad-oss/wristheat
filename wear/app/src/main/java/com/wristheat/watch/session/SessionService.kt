@@ -18,6 +18,7 @@ import com.wristheat.watch.AppConfig
 import com.wristheat.watch.R
 import com.wristheat.watch.data.Api
 import com.wristheat.watch.data.FakeApi
+import com.wristheat.watch.data.NetworkKeeper
 import com.wristheat.watch.data.OkHttpApi
 import com.wristheat.watch.data.Sample
 import com.wristheat.watch.data.SampleBuffer
@@ -49,6 +50,8 @@ class SessionService : LifecycleService() {
     private var jobs = mutableListOf<Job>()
     private var wakeLock: PowerManager.WakeLock? = null
     private var stopping = false
+    private var network: NetworkKeeper? = null
+    private var uploaderRef: Uploader? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -82,7 +85,9 @@ class SessionService : LifecycleService() {
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WristHeat:session")
             .apply { acquire(4 * 60 * 60 * 1000L) }
 
-        val api: Api = if (AppConfig.fakeApi) FakeApi() else OkHttpApi(AppConfig.apiBaseUrl, AppConfig.deviceToken)
+        val net = NetworkKeeper(this).also { it.start() }
+        network = net
+        val api: Api = if (AppConfig.fakeApi) FakeApi() else OkHttpApi(AppConfig.apiBaseUrl, AppConfig.deviceToken, net.client())
         this.api = api
         val source: HeartRateSource = when (AppConfig.hrSource) {
             "measure" -> MeasureHeartRateSource(this)
@@ -108,6 +113,7 @@ class SessionService : LifecycleService() {
             log = { Log.i(TAG, it) },
         )
 
+        uploaderRef = uploader
         var lastSampleT = 0L
         jobs += lifecycleScope.launch {
             var hrFailed = false
@@ -158,6 +164,8 @@ class SessionService : LifecycleService() {
             withContext(NonCancellable) {
                 jobs.forEach { it.cancel() }
                 runCatching { source?.stop() }
+                // Send what was buffered while offline before ending, so the run is not lost.
+                uploaderRef?.let { up -> withTimeoutOrNull(8_000) { up.flush() } }
                 if (id != null) {
                     val ended = withTimeoutOrNull(3_000) { api?.endSession(id) }
                     Log.i(TAG, "session $id end: $ended")
@@ -172,6 +180,9 @@ class SessionService : LifecycleService() {
         SessionRepository.onRedAcknowledged = null
         wakeLock?.takeIf { it.isHeld }?.release()
         wakeLock = null
+        network?.stop()
+        network = null
+        uploaderRef = null
         sessionId = null
         jobs.clear()
         stopping = false

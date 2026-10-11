@@ -150,4 +150,30 @@ class UploaderTest {
         uploader(api, buf, clock).tick()
         assertEquals(listOf(3000L, 4000L), buf.peek(10).map { it.t })
     }
+
+    @Test
+    fun flushSendsEveryBufferedBatchIgnoringBackoff() = runTest {
+        val clock = FakeClock()
+        val buf = SampleBuffer()
+        val api = ScriptedApi(ApiResult.Retry("offline"))
+        val up = uploader(api, buf, clock)
+        for (i in 0 until 700) buf.add(Sample(clock.now - 700_000 + i * 1000L, 130))
+        up.tick() // offline: backoff starts, samples kept
+        assertEquals(700, buf.size)
+
+        assertTrue(up.flush())
+        assertEquals(0, buf.size)
+        assertEquals(3, api.requests.size) // the failed try, then 600 + 100
+    }
+
+    @Test
+    fun flushGivesUpWhenStillOffline() = runTest {
+        val clock = FakeClock()
+        val buf = SampleBuffer()
+        val api = ScriptedApi().apply { fallback = ApiResult.Retry("offline") }
+        val up = uploader(api, buf, clock)
+        buf.add(Sample(clock.now, 120))
+        assertEquals(false, up.flush())
+        assertEquals(1, buf.size)
+    }
 }
