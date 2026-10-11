@@ -207,3 +207,20 @@ def test_summary_empty_session():
 
 def test_summary_unknown_session_404():
     assert call(make_deps(), "GET /v1/sessions/{session_id}/summary", {"session_id": "nope-nope"})[0] == 404
+
+
+def test_public_roster_only_simulated():
+    deps = make_deps()
+    add_incident(deps, "inc-s3", "NOTIFIED")
+    add_incident(deps, "inc-t1", "NOTIFIED", trainee_id="T1", trainee_name="Varad", trainee_kind="real",
+                 session_id="sT1-aaaaaaaa")
+    deps.repo.sessions["sT1-aaaaaaaa"]["recent_events"] = [{"t": NOW, "event": "AMBER_ENTERED", "state": "AMBER"}]
+    deps.repo.sessions["sS3-aaaaaaaa"]["recent_events"] = [{"t": NOW, "event": "RED_ENTERED", "state": "RED"}]
+    status, out = api.route({"routeKey": "GET /v1/public/roster"}, deps, NOW)
+    assert status == 200
+    ids = {t["trainee_id"] for t in out["trainees"]}
+    assert ids == {"S1", "S2", "S3"}
+    assert {i["trainee_id"] for i in out["open_incidents"]} == {"S3"}
+    assert {a["trainee_id"] for a in out["activity"]} == {"S3"}
+    assert all(t["kind"] == "simulated" for t in out["trainees"])
+    assert out["public"] is True and out["site"]["env"]["flag"] == "RED"

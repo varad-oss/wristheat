@@ -115,6 +115,17 @@ def roster(deps: Deps, now_ms: int) -> tuple[int, dict]:
                  "server_time": now_ms}
 
 
+def public_roster(deps: Deps, now_ms: int) -> tuple[int, dict]:
+    """Read-only demo: the roster restricted to SIMULATED trainees. Real wearers never leave the console."""
+    status, out = roster(deps, now_ms)
+    sim = {t["trainee_id"] for t in out["trainees"] if t["kind"] == "simulated"}
+    out["trainees"] = [t for t in out["trainees"] if t["trainee_id"] in sim]
+    out["open_incidents"] = [i for i in out["open_incidents"] if i.get("trainee_id") in sim]
+    out["activity"] = [a for a in out["activity"] if a["trainee_id"] in sim]
+    out["public"] = True
+    return status, out
+
+
 # --- series and incidents --------------------------------------------------------------------------------
 
 def series(deps: Deps, session_id: str, since: str | None) -> tuple[int, dict]:
@@ -248,6 +259,8 @@ def route(event: dict, deps: Deps, now_ms: int) -> tuple[int, dict]:
     claims = (((event.get("requestContext") or {}).get("authorizer") or {}).get("jwt") or {}).get("claims") or {}
     if key == "GET /v1/roster":
         return roster(deps, now_ms)
+    if key == "GET /v1/public/roster":
+        return public_roster(deps, now_ms)
     if key == "GET /v1/sessions/{session_id}/series":
         return series(deps, path.get("session_id", ""), query.get("since_minute"))
     if key == "GET /v1/sessions/{session_id}/summary":

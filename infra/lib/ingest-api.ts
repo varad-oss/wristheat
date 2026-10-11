@@ -101,6 +101,8 @@ export class IngestApi extends Construct {
     route('/v1/incidents/{incident_id}', apigw.HttpMethod.GET);
     route('/v1/incidents/{incident_id}/ack', apigw.HttpMethod.POST);
     route('/v1/context/refresh', apigw.HttpMethod.POST);
+    // Public read-only demo (simulated trainees only, filtered in the Lambda); no authorizer.
+    this.api.addRoutes({ path: '/v1/public/roster', methods: [apigw.HttpMethod.GET], integration });
     this.apiFn = fn;
     return fn;
   }

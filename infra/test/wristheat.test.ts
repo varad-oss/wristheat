@@ -42,8 +42,8 @@ test('python3.12 arm64 Lambdas', () => {
   }
 });
 
-test('device routes exist without an authorizer', () => {
-  for (const key of ['POST /v1/ingest', 'POST /v1/sessions/{session_id}/end']) {
+test('device routes and the public demo route exist without an authorizer', () => {
+  for (const key of ['POST /v1/ingest', 'POST /v1/sessions/{session_id}/end', 'GET /v1/public/roster']) {
     template.hasResourceProperties('AWS::ApiGatewayV2::Route', { RouteKey: key, AuthorizationType: 'NONE' });
   }
 });
