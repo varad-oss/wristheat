@@ -1,0 +1,10 @@
+{
+  "app": "npx ts-node --prefer-ts-exts bin/wristheat.ts",
+  "context": {
+    "siteId": "kgp",
+    "ackTimeoutSeconds": 90,
+    "bedrockModelId": "apac.amazon.nova-lite-v1:0",
+    "supervisorEmail": "",
+    "backupEmail": ""
+  }
+}
