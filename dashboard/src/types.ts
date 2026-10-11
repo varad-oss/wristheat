@@ -76,7 +76,7 @@ export interface SessionSummary {
 }
 
 export interface MeView {
-  trainee: { trainee_id: string; name: string; kind: 'real' | 'simulated'; mode: 'solo' | 'group'; age: number | null };
+  trainee: { trainee_id: string; name: string; kind: 'real' | 'simulated'; mode: 'solo' | 'group'; age: number | null; amber_hr?: number | null };
   live: TraineeRow;
   site: Site | null;
   open_incidents: IncidentSummary[];

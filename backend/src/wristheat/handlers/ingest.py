@@ -87,7 +87,8 @@ def process_ingest(body: dict, headers: dict, deps: Deps, now_ms: int) -> tuple[
             return _err(400, "bad_request", "session_id belongs to another trainee.")
 
         st = engine.EngineState.from_dict(session["engine"])
-        res = engine.apply_samples(st, accepted, env, now_ms)
+        amber_hr = trainee.get("amber_hr")
+        res = engine.apply_samples(st, accepted, env, now_ms, amber_hr=int(amber_hr) if amber_hr is not None else None)
         st = res.state
 
         incident_id = session.get("incident_id")

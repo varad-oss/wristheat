@@ -132,3 +132,16 @@ def test_hr_now_is_mean_of_new_samples():
     st = engine.new_state(T0, 75)
     res = engine.apply_samples(st, [(T0, 100), (T0 + 1000, 103)], None, T0)
     assert res.state.hr_now == 102
+
+
+def test_amber_hr_trigger_raises_amber_then_recovers():
+    hrs = [75, 75] + [132] * 4 + [95] * 8
+    st, events, _ = feed(hrs, "NONE")
+    assert "AMBER_ENTERED" not in [e for _, e in events]  # PSI alone stays GREEN at 132 bpm
+    st = engine.new_state(T0, None)
+    seen = []
+    for chunk in [minutes_to_samples(hrs)]:
+        res = engine.apply_samples(st, chunk, env_with("NONE"), chunk[-1][0], amber_hr=130)
+        seen += [e for _, e in res.events]
+    assert seen[:2] == ["CALIBRATED", "AMBER_ENTERED"]
+    assert "RECOVERING_ENTERED" in seen and seen[-1] == "RECOVERY_CONFIRMED"

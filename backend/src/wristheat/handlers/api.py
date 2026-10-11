@@ -279,7 +279,8 @@ def me(deps: Deps, username: str, now_ms: int) -> tuple[int, dict]:
     sessions = sorted(deps.repo.list_sessions(t["trainee_id"]), key=lambda x: x.get("started_at", 0), reverse=True)[:10]
     activity = [{"t": e["t"], "event": e["event"], "state": e["state"]} for e in (session or {}).get("recent_events") or []]
     return 200, {
-        "trainee": {k: t.get(k) for k in ("trainee_id", "name", "kind", "mode", "age")} | {"mode": t.get("mode", "group")},
+        "trainee": {k: t.get(k) for k in ("trainee_id", "name", "kind", "mode", "age")} | {"mode": t.get("mode", "group")}
+        | {"amber_hr": int(t["amber_hr"]) if t.get("amber_hr") is not None else None},
         "live": row, "site": _site_payload(site, now_ms),
         "open_incidents": [_summary(i, (site or {}).get("env")) for i in open_inc],
         "sessions": [{k: x.get(k) for k in ("session_id", "started_at", "last_seen", "status", "state", "source")}

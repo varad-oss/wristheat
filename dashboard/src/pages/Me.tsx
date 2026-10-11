@@ -67,6 +67,9 @@ export function Me() {
   return (
     <main id="main" className="page me">
       <h1 className="me-title">{data.trainee.name}, training on your own</h1>
+      {data.trainee.amber_hr != null && (
+        <p className="me-note" role="note">Demo setting: AMBER also starts after 2 minutes at or above {data.trainee.amber_hr} bpm, on top of the strain index.</p>
+      )}
       {data.open_incidents.map((inc) => <RedAlert key={inc.incident_id} inc={inc} />)}
 
       <section className="panel me-now" role="region" aria-label="Right now" style={{ borderLeftColor: colour }}>

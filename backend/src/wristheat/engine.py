@@ -96,7 +96,9 @@ def calibration_remaining_s(state: EngineState, now_ms: int) -> int:
     return max(0, min(CALIBRATION_MINUTES * 60, remaining))
 
 
-def apply_samples(state: EngineState, samples: list[tuple[int, int]], env: Env | None, now_ms: int) -> EngineResult:
+def apply_samples(state: EngineState, samples: list[tuple[int, int]], env: Env | None, now_ms: int,
+                  amber_hr: int | None = None) -> EngineResult:
+    """amber_hr: optional per-wearer heart-rate trigger; a minute at or above it counts as at least AMBER."""
     st = EngineState.from_dict(state.to_dict())  # never mutate the caller's copy
     flag = strain.effective_flag(env, now_ms)
     stale = strain.is_stale(env, now_ms)
@@ -115,7 +117,7 @@ def apply_samples(state: EngineState, samples: list[tuple[int, int]], env: Env |
         if st.open_minute is None:
             st.open_minute, st.open_sum, st.open_n = m, 0.0, 0
         elif m > st.open_minute:
-            _close_minute(st, flag, env, stale, rows, events)
+            _close_minute(st, flag, env, stale, rows, events, amber_hr)
             st.open_minute, st.open_sum, st.open_n = m, 0.0, 0
         st.open_sum += bpm
         st.open_n += 1
@@ -127,7 +129,7 @@ def apply_samples(state: EngineState, samples: list[tuple[int, int]], env: Env |
 
 
 def _close_minute(st: EngineState, flag: str, env: Env | None, stale: bool,
-                  rows: list[MinuteRow], events: list[tuple[int, str]]) -> None:
+                  rows: list[MinuteRow], events: list[tuple[int, str]], amber_hr: int | None = None) -> None:
     m, n = st.open_minute, st.open_n
     wbgt = None if (env is None or stale) else env.wbgt_c
     pm25 = None if (env is None or stale) else env.pm25
@@ -148,6 +150,8 @@ def _close_minute(st: EngineState, flag: str, env: Env | None, stale: bool,
 
     p = strain.psi(st.ct, hr, st.hr0)
     level = strain.candidate_level(p, st.ct, flag)
+    if amber_hr is not None and level == "GREEN" and hr >= amber_hr:
+        level = "AMBER"
     st.psi = p
     st.history = (st.history + [{"minute": m, "level": level, "hr": hr, "psi": p, "ct": st.ct}])[-HISTORY_LEN:]
     _evaluate(st, m, events)

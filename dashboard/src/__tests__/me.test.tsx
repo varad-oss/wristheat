@@ -64,6 +64,12 @@ describe('Personal page', () => {
     expect(api.getSeries).toHaveBeenCalledWith('sess-1');
   });
 
+  it('labels a demo heart-rate trigger when one is set', async () => {
+    vi.mocked(api.getMe).mockResolvedValue(me({ trainee: { trainee_id: 'T1', name: 'Varad', kind: 'real', mode: 'solo', age: 21, amber_hr: 130 } }));
+    renderMe();
+    expect(await screen.findByRole('note')).toHaveTextContent('Demo setting: AMBER also starts after 2 minutes at or above 130 bpm');
+  });
+
   it('lists my runs with links to their reports', async () => {
     renderMe();
     const runs = await screen.findByRole('region', { name: 'Your runs' });
