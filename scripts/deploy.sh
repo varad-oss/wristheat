@@ -13,6 +13,10 @@ if [ -f "$ROOT/dashboard/package.json" ]; then
 fi
 [ -f "$ROOT/build/dashboard/index.html" ] || echo '<!doctype html><title>WristHeat</title><p>Dashboard not built yet.</p>' > "$ROOT/build/dashboard/index.html"
 cd "$ROOT/infra"
+ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+if ! aws cloudformation describe-stacks --stack-name CDKToolkit >/dev/null 2>&1; then
+  npx cdk bootstrap "aws://$ACCOUNT/ap-south-1"
+fi
 npx cdk deploy --require-approval never --outputs-file outputs.json \
   -c supervisorEmail="${WH_SUPERVISOR_EMAIL:-}" -c backupEmail="${WH_BACKUP_EMAIL:-}" \
   -c ackTimeoutSeconds="${WH_ACK_TIMEOUT_SECONDS:-90}" "$@"

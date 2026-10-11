@@ -124,3 +124,13 @@ def test_handlers_wire_events(monkeypatch):
     esc_escalate.handler({"incident_id": IID, "timeout": {"Error": "States.Timeout"}}, None)
     out = esc_close.handler({"incident_id": IID}, None)
     assert json.dumps(out) and deps.repo.get_incident(IID)["status"] == "CLOSED"
+
+
+def test_sns_subjects_are_ascii_even_with_unicode_names():
+    deps = make()
+    deps.repo.update_incident(IID, trainee_name="Varad — earlier run")
+    escalation.notify(deps, IID, NOW)
+    escalation.escalate(deps, IID, NOW + 90_000)
+    escalation.close(deps, IID, NOW + 200_000)
+    for call in deps.clients.sns.ops("publish"):
+        assert call["Subject"].isascii() and "\n" not in call["Subject"] and len(call["Subject"]) <= 100

@@ -51,11 +51,18 @@ def _label(inc: dict) -> str:
     return "[SIMULATED] " if inc.get("trainee_kind") == "simulated" else ""
 
 
+def ascii_subject(subject: str) -> str:
+    """SNS subjects must be ASCII without line breaks, at most 100 chars."""
+    s = subject.replace("—", "-").replace("–", "-").replace("\n", " ")
+    s = s.encode("ascii", "ignore").decode("ascii")
+    return " ".join(s.split())[:100] or "WristHeat alert"
+
+
 def _publish(deps: Deps, topic: str, subject: str, message: str) -> None:
     if not topic:
         logger.warning("no SNS topic configured", extra={"subject": subject})
         return
-    deps.clients.sns.publish(TopicArn=topic, Subject=subject[:100], Message=message)
+    deps.clients.sns.publish(TopicArn=topic, Subject=ascii_subject(subject), Message=message)
 
 
 def _synth(deps: Deps, text: str, lang: str) -> bytes:
@@ -138,7 +145,7 @@ def escalate(deps: Deps, iid: str, now_ms: int) -> None:
         logger.info("incident no longer NOTIFIED; escalating email anyway", extra={"incident_id": iid})
     inc = deps.repo.get_incident(iid)
     name = inc.get("trainee_name")
-    _publish(deps, deps.cfg.backup_topic, f"{_label(inc)}ESCALATED WristHeat RED: {name} — supervisor has not responded",
+    _publish(deps, deps.cfg.backup_topic, f"{_label(inc)}ESCALATED WristHeat RED: {name} - supervisor has not responded",
              _alert_message(deps, inc, f"ESCALATION: the supervisor has not acknowledged the RED alert for {name}."))
     _event(deps, iid, now_ms, "ESCALATED", "Backup contact emailed")
 
