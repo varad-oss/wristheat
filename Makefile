@@ -3,6 +3,7 @@ PY ?= $(CURDIR)/.venv/bin/python
 .PHONY: test synth deploy
 test:
 	cd backend && $(PY) -m pytest -q
+	$(PY) -m pytest -q simulator/tests
 
 synth:
 	cd infra && npx cdk synth
