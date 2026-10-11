@@ -31,7 +31,7 @@ export function TodayPanel({ site, serverTime }: { site: Site | null; serverTime
       </div>
 
       {forecast.length > 0 && (
-        <div className="timeline" role="img" aria-label="Heat flag by hour for the next 24 hours">
+        <div className="heat-tl" role="img" aria-label="Heat flag by hour for the next 24 hours">
           {forecast.map((p) => {
             const h = localHour(p.t);
             const now = serverTime >= p.t && serverTime < p.t + 3600_000;

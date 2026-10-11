@@ -98,6 +98,19 @@ describe('Incident page', () => {
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
+  it('shows a readable timeline with plain event names, in order', async () => {
+    vi.mocked(api.getIncident).mockResolvedValue(incident({ events: [
+      { t: NOW - 60000, type: 'OPENED', detail: 'RED entered (psi>=7)' },
+      { t: NOW - 50000, type: 'ESCALATED', detail: 'Backup contact emailed' },
+      { t: NOW - 40000, type: 'RECOVERY_CONFIRMED', detail: 'Recovery confirmed from the data' },
+    ] }));
+    renderAt();
+    const steps = await screen.findAllByRole('listitem');
+    expect(steps.map((s) => s.querySelector('.step-name')?.textContent)).toEqual(
+      ['RED alert opened', 'Escalated to backup contact', 'Recovery confirmed by the data']);
+    expect(steps[1]).toHaveTextContent('Backup contact emailed');
+  });
+
   it('labels a template report', async () => {
     vi.mocked(api.getIncident).mockResolvedValue(incident({ report: { text: 'x', source: 'template', model: null, generated_at: NOW } }));
     renderAt();

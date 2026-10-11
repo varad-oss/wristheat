@@ -44,6 +44,7 @@ def main():
         fields = {"name": name, "kind": kind, "age": age, "site_id": SITE["site_id"], "hidden": hidden}
         if rest is not None:
             fields["rest_hr_override"] = rest
+        fields["mode"] = "solo" if tid in ("T1", "R1") else "group"
         upsert(trainees, {"trainee_id": tid}, fields)
     print(f"Seeded site {SITE['site_id']} and trainees {', '.join(r[0] for r in rows)}")
 

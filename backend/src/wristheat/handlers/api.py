@@ -92,16 +92,17 @@ def _summary(inc: dict, site_env: dict | None) -> dict:
 
 
 def roster(deps: Deps, now_ms: int) -> tuple[int, dict]:
+    """Group view: every visible trainee in group mode. Solo wearers (mode "solo") have their own page."""
     site_id = os.environ.get("SITE_ID", "kgp")
     site = deps.repo.get_site(site_id)
-    incidents = deps.repo.list_incidents()
+    trainees = [t for t in deps.repo.list_trainees() if not t.get("hidden") and t.get("mode", "group") != "solo"]
+    group_ids = {t["trainee_id"] for t in trainees}
+    incidents = [i for i in deps.repo.list_incidents() if i.get("trainee_id") in group_ids]
     open_inc = sorted((i for i in incidents if i.get("status") in OPEN_STATUSES),
                       key=lambda i: i.get("opened_at", 0), reverse=True)
     open_by_session = {i.get("session_id"): i["incident_id"] for i in open_inc}
     rows, activity = [], []
-    for t in deps.repo.list_trainees():
-        if t.get("hidden"):
-            continue
+    for t in trainees:
         row, session = _trainee_row(deps.repo, t, now_ms, open_by_session)
         rows.append(row)
         for e in (session or {}).get("recent_events") or []:

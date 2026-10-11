@@ -224,3 +224,16 @@ def test_public_roster_only_simulated():
     assert {a["trainee_id"] for a in out["activity"]} == {"S3"}
     assert all(t["kind"] == "simulated" for t in out["trainees"])
     assert out["public"] is True and out["site"]["env"]["flag"] == "RED"
+
+
+def test_group_roster_excludes_solo_wearers():
+    deps = make_deps()
+    deps.repo.trainees["T1"]["mode"] = "solo"
+    deps.repo.sessions["sT1-aaaaaaaa"]["recent_events"] = [{"t": NOW, "event": "AMBER_ENTERED", "state": "AMBER"}]
+    add_incident(deps, "inc-t1", "NOTIFIED", trainee_id="T1", trainee_name="Varad", trainee_kind="real",
+                 session_id="sT1-aaaaaaaa")
+    _, out = call(deps, "GET /v1/roster")
+    assert "T1" not in {t["trainee_id"] for t in out["trainees"]}
+    assert "T1" not in {a["trainee_id"] for a in out["activity"]}
+    assert "inc-t1" not in {i["incident_id"] for i in out["open_incidents"]}
+    assert "S3" in {t["trainee_id"] for t in out["trainees"]}
