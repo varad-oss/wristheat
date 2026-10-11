@@ -145,8 +145,10 @@ def _after_events(deps: Deps, events: list, session: dict, new_incident: dict | 
             deps.repo.update_incident(iid, recovered_at=now_ms)
             deps.repo.append_incident_event(iid, {"t": now_ms, "type": "RECOVERY_CONFIRMED",
                                                   "detail": "Recovery confirmed from the data"})
-            if inc.get("recovery_token"):
-                _send_success(deps, inc["recovery_token"], {"recovered_at": now_ms})
+            # Re-read: the workflow may have stored its token after our first read.
+            token = (deps.repo.get_incident(iid) or {}).get("recovery_token")
+            if token:
+                _send_success(deps, token, {"recovered_at": now_ms})
 
 
 def process_end(session_id: str, headers: dict, deps: Deps, now_ms: int) -> tuple[int, dict]:

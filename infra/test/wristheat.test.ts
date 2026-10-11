@@ -79,3 +79,21 @@ test('supervisor routes use the JWT authorizer; device routes do not', () => {
     AdminCreateUserConfig: Match.objectLike({ AllowAdminCreateUserOnly: true }),
   }));
 });
+
+test('escalation state machine waits for task tokens and emails two topics', () => {
+  const sm = Object.values(template.findResources('AWS::StepFunctions::StateMachine'))[0] as any;
+  expect(sm.Properties.StateMachineName).toBe('wristheat-escalation');
+  const def = JSON.stringify(sm.Properties.DefinitionString);
+  expect(def).toContain('waitForTaskToken');
+  for (const state of ['Notify', 'WaitForAck', 'Escalate', 'WaitForAckAfterEscalation', 'MarkUnacknowledged',
+    'WaitForRecovery', 'Close']) {
+    expect(def).toContain(state);
+  }
+  template.hasResourceProperties('AWS::SNS::Topic', { TopicName: 'wristheat-supervisor' });
+  template.hasResourceProperties('AWS::SNS::Topic', { TopicName: 'wristheat-backup' });
+  template.resourceCountIs('AWS::SNS::Subscription', 2);
+  template.hasResourceProperties('AWS::Lambda::Function', Match.objectLike({
+    Handler: 'wristheat.handlers.ingest.handler',
+    Environment: Match.objectLike({ Variables: Match.objectLike({ STATE_MACHINE_ARN: Match.anyValue() }) }),
+  }));
+});

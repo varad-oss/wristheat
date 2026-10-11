@@ -54,7 +54,6 @@ export class IngestApi extends Construct {
       environment: {
         ...data.tableEnv(),
         DEVICE_TOKEN_SECRET_ARN: data.deviceToken.secretArn,
-        STATE_MACHINE_ARN: '',
         SITE_ID: props.siteId,
       },
     });

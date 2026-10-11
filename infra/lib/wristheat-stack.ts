@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import { Auth } from './auth';
 import { Context } from './context';
 import { Data } from './data';
+import { Escalation } from './escalation';
 import { IngestApi } from './ingest-api';
 import { Layers } from './layers';
 
@@ -22,7 +23,19 @@ export class WristHeatStack extends Stack {
     const ingest = new IngestApi(this, 'Ingest', { buildDir: props.buildDir, data, layers, siteId, corsOrigins });
     const context = new Context(this, 'Context', { buildDir: props.buildDir, data, layers, siteId });
     const auth = new Auth(this, 'Auth');
-    ingest.addSupervisorApi(auth, context.fn);
+    const apiFn = ingest.addSupervisorApi(auth, context.fn);
+    const dashboardUrl = '(dashboard pending)';
+    const escalation = new Escalation(this, 'Escalation', {
+      buildDir: props.buildDir, data, layers, siteId, dashboardUrl,
+      ackTimeoutSeconds: Number(this.node.tryGetContext('ackTimeoutSeconds') ?? 90),
+      supervisorEmail: this.node.tryGetContext('supervisorEmail') || undefined,
+      backupEmail: this.node.tryGetContext('backupEmail') || undefined,
+      bedrockModelId: this.node.tryGetContext('bedrockModelId') ?? 'apac.amazon.nova-lite-v1:0',
+    });
+    ingest.ingestFn.addEnvironment('STATE_MACHINE_ARN', escalation.stateMachineArn);
+    escalation.stateMachine.grantStartExecution(ingest.ingestFn);
+    escalation.grantTaskResponse(ingest.ingestFn);
+    escalation.grantTaskResponse(apiFn);
 
     const out = (name: string, value: string) => new CfnOutput(this, name, { value });
     out('ApiUrl', ingest.api.apiEndpoint);
@@ -35,5 +48,6 @@ export class WristHeatStack extends Stack {
     out('TableIncidents', data.incidents.tableName);
     out('AudioBucketName', data.audioBucket.bucketName);
     out('ContextFunctionName', context.fn.functionName);
+    out('StateMachineArn', escalation.stateMachine.stateMachineArn);
   }
 }
