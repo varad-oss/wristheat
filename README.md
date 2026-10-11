@@ -17,7 +17,7 @@ Watch (Wear OS) ──5 s──► API Gateway ──► Lambda ingest: ECTemp �
                                                        → WaitForAck (90 s) → Escalate (backup) → WaitForAck
                                                        → WaitForRecovery (released by ingest) → Close (Bedrock report)
 EventBridge Scheduler (10 min) ► Lambda context: Open-Meteo → Liljegren WBGT (thermofeel) → Sites
-React dashboard on S3 + CloudFront ── Cognito ──► supervisor API (roster every 3 s, acknowledge)
+React dashboard (API Gateway $default route, or S3 + CloudFront) ── Cognito ──► supervisor API (roster every 3 s, acknowledge)
 ```
 
 ## AWS services and the job each one does
@@ -32,8 +32,8 @@ React dashboard on S3 + CloudFront ── Cognito ──► supervisor API (rost
 | Amazon Polly (neural, Kajal, en-IN + hi-IN) | Spoken alert in English and Hindi |
 | Amazon SNS (email) | Alerts the supervisor, then the backup contact |
 | Amazon Bedrock (Converse, Nova Lite via the APAC inference profile) | Writes the incident report from logged facts only |
-| Amazon S3 | Alert audio and dashboard assets |
-| Amazon CloudFront | Serves the dashboard over HTTPS |
+| Amazon S3 | Alert audio (and dashboard assets when CloudFront is enabled) |
+| Amazon CloudFront | Serves the dashboard over HTTPS when enabled (`-c cloudFront=true`). New AWS accounts need CloudFront verification by AWS Support; until then API Gateway + a small Lambda serve the dashboard over HTTPS from the same origin as the API |
 | Amazon Cognito | Supervisor sign-in |
 | AWS Secrets Manager | Holds the device token |
 | CloudWatch + X-Ray (via Powertools for AWS Lambda) | Logs, custom metrics, a WristHeat dashboard, traces |
@@ -104,5 +104,6 @@ All Open-Meteo variable names in spec §8 were confirmed with a live call on 11 
 - WBGT is open-field in sun from forecast data, not a measurement at the athlete's location.
 - ECTemp is unvalidated on wrist optical heart rate; the ± 0.6 °C band is the chest-strap figure.
 - One site per deployment; one shared device token.
+- CloudFront was blocked on our new account ("must be verified"), so the deployed dashboard is served by API Gateway + Lambda; the CloudFront path is in the stack behind `-c cloudFront=true`.
 
 See [`CREDITS.md`](CREDITS.md) for sources and licences.
